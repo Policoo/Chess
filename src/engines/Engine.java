@@ -1,10 +1,11 @@
 package engines;
 
 import board.Board;
+import board.Move;
 
 public interface Engine {
 
-    int[] determineMove(Board board);
+    Move determineMove(Board board);
 
     boolean isWhite();
 

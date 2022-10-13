@@ -184,7 +184,11 @@ public class Board {
         return insufficientMaterialWhite && insufficientMaterialBlack;
     }
 
-    public void makeMove(int startX, int startY, int endX, int endY) {
+    public void makeMove(Move move) {
+        int startX = move.startX();
+        int startY = move.startY();
+        int endX = move.endX();
+        int endY = move.endY();
         tile[startX][startY].setHasMoved(true);
 
         //castle if true
@@ -260,6 +264,13 @@ public class Board {
             colorToMove = "w";
         }
         currentMove++;
+
+        String typeAndColor = tile[endX][endY].getColor() + type;
+        int pieceAmount = 1;
+        if (remainingPieces.containsKey(typeAndColor)) {
+            pieceAmount = remainingPieces.get(typeAndColor) + 1;
+        }
+        remainingPieces.replace(typeAndColor, pieceAmount);
     }
 
     private void removePieceFromRemainingPieces(int x, int y) {
@@ -275,13 +286,17 @@ public class Board {
         }
     }
 
-    public boolean isLegalMove(int startX, int startY, int endX, int endY) {
+    public boolean isLegalMove(Move move) {
+        int startX = move.startX();
+        int startY = move.startY();
+        int endX = move.endX();
+        int endY = move.endY();
         //moving on boardCopy changes hasMoved for actual board to, so if needed, make hasMoved false again
         boolean resetHasMoved = !getTile(startX, startY).hasMoved();
 
         //make move on boardCopy and check if it's a check
         Board boardCopy = deepCopy();
-        boardCopy.makeMove(startX, startY, endX, endY);
+        boardCopy.makeMove(move);
         String color = boardCopy.getTile(endX, endY).getColor();
         boolean isLegalMove = !boardCopy.isCheck(color);
 

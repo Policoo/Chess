@@ -1,10 +1,11 @@
 package gui;
 
 import board.Board;
+import board.Move;
 import engines.Counter;
 import engines.Engine;
 import engines.Random;
-import engines.Thinker;
+import engines.ThinkerUnoptimized;
 import utils.MoveGenerator;
 import utils.Utils;
 
@@ -59,7 +60,7 @@ public class ChessGUI extends JFrame implements MouseListener {
         panel = new JPanel();
         panel.setLayout(null);
         panel.setBounds(0, 0, 550, 550);
-        board = new Board("r1bqkbnr/1pp2ppp/2n5/6N1/pPBp1B2/2N5/P1P3PP/R2Q1RK1 b kq b3 0 12");
+        board = new Board();
         fillPiecesImagesList();
         generateBoard();
         addPiecesToBoard();
@@ -80,7 +81,7 @@ public class ChessGUI extends JFrame implements MouseListener {
                 this.engine = new Counter("w");
                 break;
             default:
-                this.engine = new Thinker("b");
+                this.engine = new ThinkerUnoptimized("b");
         }
     }
 
@@ -189,17 +190,17 @@ public class ChessGUI extends JFrame implements MouseListener {
     }
 
     private void showLegalMoves(int x, int y) {
-        List<int[]> moves = MoveGenerator.generateMoves(x, y, this.board);
-        for (int[] move : moves) {
-            legalMoves.add(Utils.formatXY(move[0], move[1]));
+        List<Move> moves = MoveGenerator.generateMoves(x, y, this.board);
+        for (Move move : moves) {
+            legalMoves.add(Utils.formatXY(move.endX(), move.endY()));
         }
         if (legalMoves.size() == 0) {
             return;
         }
         int moveX, moveY;
-        for (int[] move : moves) {
-            moveX = move[0];
-            moveY = move[1];
+        for (Move move : moves) {
+            moveX = move.endX();
+            moveY = move.endY();
             if (moveY % 2 == 0) {
                 if (moveX % 2 == 0) {
                     tileList[moveX][moveY].setBackground(new Color(248, 109, 91));
@@ -290,8 +291,8 @@ public class ChessGUI extends JFrame implements MouseListener {
             }
             return;
         }
-        movePiece(lastClicked.get(0), lastClicked.get(1), x, y);
-        movePieceInMemory(lastClicked.get(0), lastClicked.get(1), x, y);
+        movePiece(new Move(lastClicked.get(0), lastClicked.get(1), x, y));
+        movePieceInMemory(new Move(lastClicked.get(0), lastClicked.get(1), x, y));
         if (board.isGameOver()) {
             System.out.println("game over");
         }
@@ -305,7 +306,11 @@ public class ChessGUI extends JFrame implements MouseListener {
         tileList[x][y].revalidate();
     }
 
-    private void movePiece(int startX, int startY, int endX, int endY) {
+    private void movePiece(Move move) {
+        int startX = move.startX();
+        int startY = move.startY();
+        int endX = move.endX();
+        int endY = move.endY();
         int piece = determinePieceNumber(startX, startY);
         //castle if true
         if (board.isKing(startX, startY) && Math.abs(startX - endX) == 2) {
@@ -331,21 +336,21 @@ public class ChessGUI extends JFrame implements MouseListener {
         killPiece(startX, startY);
     }
 
-    private void movePieceInMemory(int startX, int startY, int endX, int endY) {
-        board.makeMove(startX, startY, endX, endY);
+    private void movePieceInMemory(Move move) {
+        board.makeMove(move);
     }
 
     private void makeEngineMove() {
         if (engine == null) {
             return;
         }
-        int[] move = engine.determineMove(board);
+        Move move = engine.determineMove(board);
         if (engine.getName().equals("counter")) {
             compareCountResults();
             return;
         }
-        movePiece(move[0], move[1], move[2], move[3]);
-        movePieceInMemory(move[0], move[1], move[2], move[3]);
+        movePiece(move);
+        movePieceInMemory(move);
     }
 
     private void promotePawn(int x, int y, String type) {

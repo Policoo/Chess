@@ -1,6 +1,7 @@
 package engines;
 
 import board.Board;
+import board.Move;
 import utils.MoveGenerator;
 import utils.Utils;
 
@@ -25,10 +26,10 @@ public class Counter implements Engine{
     }
 
     @Override
-    public int[] determineMove(Board board) {
+    public Move determineMove(Board board) {
         this.results = new StringBuilder();
         System.out.println(moveGenerationTest(depth, board));
-        return new int[0];
+        return new Move();
     }
 
     @Override
@@ -45,18 +46,18 @@ public class Counter implements Engine{
         if (depth == 0) {
             return 1;
         }
-        HashMap<int[], List<int[]>> moves = MoveGenerator.generateMovesForColorToMove(board);
+        HashMap<int[], List<Move>> moves = MoveGenerator.generateMovesForColorToMove(board);
         int numPositions = 0;
 
         for (int[] startPosition : moves.keySet()) {
             Board boardCopy = board.deepCopy();
-            for (int[] move : moves.get(startPosition)) {
+            for (Move move : moves.get(startPosition)) {
                 int numBeforeLoop = numPositions;
                 if (depth == this.depth) {
-                    System.out.print(Utils.getChessCoordinates(startPosition[0], startPosition[1]) + Utils.getChessCoordinates(move[0], move[1]) + ": ");
-                    results.append(Utils.getChessCoordinates(startPosition[0], startPosition[1])).append(Utils.getChessCoordinates(move[0], move[1])).append(":");
+                    System.out.print(Utils.getChessCoordinates(startPosition[0], startPosition[1]) + Utils.getChessCoordinates(move.startX(), move.startY()) + ": ");
+                    results.append(Utils.getChessCoordinates(startPosition[0], startPosition[1])).append(Utils.getChessCoordinates(move.startX(), move.startY())).append(":");
                 }
-                boardCopy.makeMove(startPosition[0], startPosition[1], move[0], move[1]);
+                boardCopy.makeMove(move);
                 numPositions += moveGenerationTest(depth - 1, boardCopy);
                 boardCopy = board.deepCopy();
                 if (depth == this.depth) {
