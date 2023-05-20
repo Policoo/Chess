@@ -20,13 +20,14 @@ public class ThinkerUnoptimized implements Engine {
         this.color = color;
         this.name = "thinker";
         initializePieceValues();
-        this.depth = 2;
+        this.depth = 1;
     }
 
     @Override
     public Move determineMove(Board board) {
         Move bestMove = new Move();
         int bestMoveEval = Integer.MIN_VALUE;
+        int perspective = board.getColorToMove().equals("w") ? 1 : -1;
 
         HashMap<int[], List<Move>> moves = MoveGenerator.generateMovesForColorToMove(board);
         if (moves.size() == 0) {
@@ -38,14 +39,22 @@ public class ThinkerUnoptimized implements Engine {
             for (Move move : moves.get(startPosition)) {
                 boardCopy.makeMove(move);
                 int moveEval = miniMax(boardCopy, this.depth);
+                System.out.println(move + ": " + moveEval * perspective);
                 boardCopy = board.deepCopy();
-                if (moveEval > bestMoveEval) {
+                System.out.println("CURRENT BEST MOVE: " + bestMove + " - " + bestMoveEval);
+                if (moveEval * perspective > bestMoveEval) {
+                    System.out.println(moveEval * perspective + " > " + bestMoveEval + " => NEW BEST MOVE: " + move);
                     bestMove = move;
-                    bestMoveEval = moveEval;
+                    bestMoveEval = moveEval * perspective;
+                }
+                else {
+                    System.out.println(moveEval * perspective + " < " + bestMoveEval);
                 }
             }
         }
-        System.out.println(bestMoveEval + " " + bestMove.toString());
+        System.out.println("");
+        System.out.println("");
+        System.out.println("");
         return bestMove;
     }
 
@@ -88,15 +97,7 @@ public class ThinkerUnoptimized implements Engine {
 
             }
         }
-
-        int evaluation = whiteEval - blackEval;
-        int perspective = (board.getColorToMove().equals("w")) ? -1 : 1;
-        String thing = (evaluation > 0) ? "White is better" : ((evaluation == 0) ? "Equal" : "Black is better");
-        System.out.println(thing);
-//        board.printBoard();
-//        System.out.println(evaluation * perspective);
-//        System.out.println();
-        return evaluation * perspective;
+        return whiteEval - blackEval;
     }
 
     private void initializePieceValues() {

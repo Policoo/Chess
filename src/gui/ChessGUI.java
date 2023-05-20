@@ -377,6 +377,7 @@ public class ChessGUI extends JFrame implements MouseListener {
             legalMoves.clear();
         }
         lastClicked.clear();
+        legalMoves.clear();
         resetColors();
     }
 

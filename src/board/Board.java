@@ -125,36 +125,36 @@ public class Board {
         return false;
     }
 
-    public boolean isCheckMate() {
+    private boolean isCheckMate() {
         if (legalMovesExist()) {
             return false;
         }
         return isCheck(colorToMove);
     }
 
-    public boolean isDraw() {
+    private boolean isDraw() {
         return isStalemate() || isRepetition() || fiftyMoveRule() || insufficientMaterial();
     }
 
-    public boolean isStalemate() {
+    private boolean isStalemate() {
         if (legalMovesExist()) {
             return false;
         }
         return !isCheck(colorToMove);
     }
 
-    public boolean isRepetition() {
+    private boolean isRepetition() {
         //only add pieces position and color to move to history
         String[] splitFen = positionToFen().split(" ");
         String fenHistory = splitFen[0] + " " + splitFen[1];
         return positionHistory.containsKey(fenHistory) && positionHistory.get(fenHistory) > 1;
     }
 
-    public boolean fiftyMoveRule() {
+    private boolean fiftyMoveRule() {
         return currentMove - lastCaptureOrPawnAdv >= 100;
     }
 
-    public boolean insufficientMaterial() {
+    private boolean insufficientMaterial() {
         boolean insufficientMaterialWhite = false;
         boolean insufficientMaterialBlack = false;
         //if there are pawns on the board there is sufficient material
@@ -436,7 +436,7 @@ public class Board {
         return kingCoordinates;
     }
 
-    public String positionToFen() {
+    private String positionToFen() {
         StringBuilder fen = new StringBuilder();
         StringBuilder castleRightsWhite = new StringBuilder();
         StringBuilder castleRightsBlack = new StringBuilder();
@@ -624,7 +624,7 @@ public class Board {
         }
     }
 
-    public boolean validCoordinates(int x, int y) {
+    private boolean validCoordinates(int x, int y) {
         return x >= 0 && x < 8 && y >= 0 && y < 8;
     }
 
