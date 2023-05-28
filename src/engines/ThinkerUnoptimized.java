@@ -14,13 +14,16 @@ public class ThinkerUnoptimized implements Engine {
     private final String color;
     private final int depth;
 
+    private final int alpha = Integer.MIN_VALUE;
+    private final int beta = Integer.MAX_VALUE;
+
     private HashMap<String, Integer> pieceValues;
 
     public ThinkerUnoptimized(String color) {
         this.color = color;
         this.name = "thinker";
         initializePieceValues();
-        this.depth = 1;
+        this.depth = 4;
     }
 
     @Override
@@ -33,49 +36,75 @@ public class ThinkerUnoptimized implements Engine {
         if (moves.size() == 0) {
             return null;
         }
-
+        int count = 0;
         for (int[] startPosition : moves.keySet()) {
             Board boardCopy = board.deepCopy();
             for (Move move : moves.get(startPosition)) {
                 boardCopy.makeMove(move);
-                int moveEval = miniMax(boardCopy, this.depth);
-                System.out.println(move + ": " + moveEval * perspective);
+                boolean maximizingPlayer = boardCopy.getColorToMove().equals("w");
+                //int[] moveEval = miniMax(boardCopy, this.depth, maximizingPlayer);
+                int[] moveEval = miniMaxPruning(boardCopy, this.depth, maximizingPlayer, alpha, beta);
+                count += moveEval[1];
                 boardCopy = board.deepCopy();
-                System.out.println("CURRENT BEST MOVE: " + bestMove + " - " + bestMoveEval);
-                if (moveEval * perspective > bestMoveEval) {
-                    System.out.println(moveEval * perspective + " > " + bestMoveEval + " => NEW BEST MOVE: " + move);
+                if (moveEval[0] * perspective > bestMoveEval) {
                     bestMove = move;
-                    bestMoveEval = moveEval * perspective;
-                }
-                else {
-                    System.out.println(moveEval * perspective + " < " + bestMoveEval);
+                    bestMoveEval = moveEval[0] * perspective;
                 }
             }
         }
-        System.out.println("");
-        System.out.println("");
-        System.out.println("");
+        System.out.println(count);
         return bestMove;
     }
 
-    private int miniMax(Board board, int depth) {
+    private int[] miniMax(Board board, int depth, boolean maximizingPlayer) {
         if (depth == 0) {
-            return evaluate(board);
+            return new int[]{evaluate(board), 1};
         }
 
         HashMap<int[], List<Move>> moves = MoveGenerator.generateMovesForColorToMove(board);
-        int bestEval = Integer.MIN_VALUE;
+        int bestEval = (maximizingPlayer) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        int count = 0;
 
         for (int[] startPosition : moves.keySet()) {
-            Board boardCopy = board.deepCopy();
             for (Move move : moves.get(startPosition)) {
+                Board boardCopy = board.deepCopy();
                 boardCopy.makeMove(move);
-                int moveEval = -miniMax(boardCopy, depth - 1);
-                bestEval = Math.max(bestEval, moveEval);
-                boardCopy = board.deepCopy();
+                int[] moveEval = miniMax(boardCopy, depth - 1, !maximizingPlayer);
+                count += moveEval[1];
+                bestEval = (maximizingPlayer) ? Math.max(bestEval, moveEval[0]) : Math.min(bestEval, moveEval[0]);
             }
         }
-        return bestEval;
+        return new int[]{bestEval, count};
+    }
+
+    private int[] miniMaxPruning(Board board, int depth, boolean maximizingPlayer, int alpha, int beta) {
+        if (depth == 0) {
+            return new int[]{evaluate(board), 1};
+        }
+
+        HashMap<int[], List<Move>> moves = MoveGenerator.generateMovesForColorToMove(board);
+        int bestEval = (maximizingPlayer) ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        int count = 0;
+
+        for (int[] startPosition : moves.keySet()) {
+            for (Move move : moves.get(startPosition)) {
+                Board boardCopy = board.deepCopy();
+                boardCopy.makeMove(move);
+                int[] moveEval = miniMaxPruning(boardCopy, depth - 1, !maximizingPlayer, alpha, beta);
+                count += moveEval[1];
+                bestEval = (maximizingPlayer) ? Math.max(bestEval, moveEval[0]) : Math.min(bestEval, moveEval[0]);
+                if (maximizingPlayer) {
+                    alpha = Math.max(alpha, moveEval[0]);
+                }
+                else {
+                    beta = Math.min(beta, moveEval[0]);
+                }
+                if (beta <= alpha) {
+                    break;
+                }
+            }
+        }
+        return new int[]{bestEval, count};
     }
 
     private int evaluate(Board board) {
