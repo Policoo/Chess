@@ -1,11 +1,12 @@
 package gui;
 
-import board.Board;
-import board.Move;
+import game.Board;
+import game.Move;
 import engines.Counter;
 import engines.Engine;
 import engines.Random;
-import engines.ThinkerUnoptimized;
+import engines.Greedy;
+import game.Piece;
 import utils.MoveGenerator;
 import utils.Utils;
 
@@ -20,19 +21,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
 public class ChessGUI extends JFrame implements MouseListener {
     private final JPanel panel;
-    private final JLabel[][] tileList = new JLabel[8][8];
+    private final JLabel[] tileList = new JLabel[64];
     private final List<ImageIcon> piecesImages = new ArrayList<>();
-    private final List<Integer> legalMoves = new ArrayList<>();
-    private final List<Integer> lastClicked = new ArrayList<>();
+    private int lastClicked;
+    private List<Move> legalMoves = new ArrayList<>();
     private final Board board;
     private Engine engine;
 
     public ChessGUI() {
+        MoveGenerator.initialize();
         this.setTitle("ChessGUI");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(527, 550);
@@ -48,10 +51,12 @@ public class ChessGUI extends JFrame implements MouseListener {
         this.add(panel);
         panel.addMouseListener(this);
         this.setVisible(true);
+        legalMoves = MoveGenerator.generateMoves(board);
+        lastClicked = -1;
     }
 
     public ChessGUI(String config) {
-        initializeEngine(config);
+        MoveGenerator.initialize();
         this.setTitle("ChessGUI");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(527, 550);
@@ -67,9 +72,56 @@ public class ChessGUI extends JFrame implements MouseListener {
         this.add(panel);
         panel.addMouseListener(this);
         this.setVisible(true);
+        initializeEngine(config);
         if (engine.isWhite()) {
             makeEngineMove();
         }
+        lastClicked = -1;
+    }
+
+    public ChessGUI(String fenString, String config) {
+        MoveGenerator.initialize();
+        this.setTitle("ChessGUI");
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setSize(527, 550);
+        this.setLayout(null);
+        this.setResizable(false);
+        panel = new JPanel();
+        panel.setLayout(null);
+        panel.setBounds(0, 0, 550, 550);
+        board = new Board(fenString);
+        fillPiecesImagesList();
+        generateBoard();
+        addPiecesToBoard();
+        this.add(panel);
+        panel.addMouseListener(this);
+        this.setVisible(true);
+        initializeEngine(config);
+        if (engine.isWhite()) {
+            makeEngineMove();
+        }
+        lastClicked = -1;
+    }
+
+    public ChessGUI(String fenString, boolean yes) {
+        MoveGenerator.initialize();
+        this.setTitle("ChessGUI");
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setSize(527, 550);
+        this.setLayout(null);
+        this.setResizable(false);
+        panel = new JPanel();
+        panel.setLayout(null);
+        panel.setBounds(0, 0, 550, 550);
+        board = new Board(fenString);
+        fillPiecesImagesList();
+        generateBoard();
+        addPiecesToBoard();
+        this.add(panel);
+        panel.addMouseListener(this);
+        this.setVisible(true);
+        legalMoves = MoveGenerator.generateMoves(board);
+        lastClicked = -1;
     }
 
     private void initializeEngine(String config) {
@@ -81,72 +133,44 @@ public class ChessGUI extends JFrame implements MouseListener {
                 this.engine = new Counter("w");
                 break;
             default:
-                this.engine = new ThinkerUnoptimized("b");
+                this.engine = new Greedy("b");
         }
     }
 
     private void addPiecesToBoard() {
         int piece;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                if (board.getTile(x, y) == null) {
-                    continue;
-                }
-                piece = determinePieceNumber(x, y);
-                tileList[x][y].setIcon(piecesImages.get(piece));
+        for (int index = 0; index < 64; index++) {
+            if (board.isEmptyTile(index)) {
+                continue;
             }
+
+            piece = determinePieceNumber(index);
+            tileList[index].setIcon(piecesImages.get(piece));
         }
     }
 
-    private int determinePieceNumber(int x, int y) {
+    private int determinePieceNumber(int index) {
         int piece;
-        switch (board.getTile(x, y).getType()) {
-            case "k":
+        switch (board.getPieceType(index)) {
+            case Piece.KING:
                 piece = 0;
                 break;
-            case "q":
+            case Piece.QUEEN:
                 piece = 1;
                 break;
-            case "b":
+            case Piece.BISHOP:
                 piece = 2;
                 break;
-            case "n":
+            case Piece.KNIGHT:
                 piece = 3;
                 break;
-            case "r":
+            case Piece.ROOK:
                 piece = 4;
                 break;
             default:
                 piece = 5;
         }
-        if (board.getTile(x, y).isColor("b")) {
-            piece += 6;
-        }
-        return piece;
-    }
-
-    private int determinePieceNumber(int x, int y, String type) {
-        int piece;
-        switch (type) {
-            case "k":
-                piece = 0;
-                break;
-            case "q":
-                piece = 1;
-                break;
-            case "b":
-                piece = 2;
-                break;
-            case "n":
-                piece = 3;
-                break;
-            case "r":
-                piece = 4;
-                break;
-            default:
-                piece = 5;
-        }
-        if (board.getTile(x, y).isColor("b")) {
+        if (board.isColor(index, Piece.BLACK)) {
             piece += 6;
         }
         return piece;
@@ -155,71 +179,68 @@ public class ChessGUI extends JFrame implements MouseListener {
     private void generateBoard() {
         JLabel jLabel;
         boolean white = true;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                jLabel = new JLabel();
-                if (white) {
-                    jLabel.setBackground(new Color(240, 217, 181));
-                } else {
-                    jLabel.setBackground(new Color(181, 136, 99));
-                }
-                jLabel.setOpaque(true);
-                jLabel.setHorizontalAlignment(JLabel.CENTER);
-                jLabel.setBounds(x * 64, y * 64, 64, 64);
-                panel.add(jLabel);
-                tileList[x][y] = jLabel;
+        for (int index = 0; index < 64; index++) {
+            jLabel = new JLabel();
+            if (white) {
+                jLabel.setBackground(new Color(240, 217, 181));
+            } else {
+                jLabel.setBackground(new Color(181, 136, 99));
+            }
+            jLabel.setOpaque(true);
+            jLabel.setHorizontalAlignment(JLabel.CENTER);
+            jLabel.setBounds((index % 8) * 64, (index / 8) * 64, 64, 64);
+            panel.add(jLabel);
+            tileList[index] = jLabel;
+            if (index % 8 != 7) {
                 white = !white;
             }
-            white = !white;
         }
     }
 
     private void resetColors() {
         boolean white = true;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                if (white) {
-                    tileList[x][y].setBackground(new Color(240, 217, 181));
-                } else {
-                    tileList[x][y].setBackground(new Color(181, 136, 99));
-                }
+        for (int index = 0; index < 64; index++) {
+            if (white) {
+                tileList[index].setBackground(new Color(240, 217, 181));
+            } else {
+                tileList[index].setBackground(new Color(181, 136, 99));
+            }
+
+            if (index % 8 != 7) {
                 white = !white;
             }
-            white = !white;
         }
     }
 
-    private void showLegalMoves(int x, int y) {
-        List<Move> moves = MoveGenerator.generateMoves(x, y, this.board);
-        for (Move move : moves) {
-            legalMoves.add(Utils.formatXY(move.endX(), move.endY()));
-        }
+    private void showLegalMoves(int index) throws NullPointerException {
         if (legalMoves.size() == 0) {
             return;
         }
-        int moveX, moveY;
-        for (Move move : moves) {
-            moveX = move.endX();
-            moveY = move.endY();
-            if (moveY % 2 == 0) {
-                if (moveX % 2 == 0) {
-                    tileList[moveX][moveY].setBackground(new Color(248, 109, 91));
+
+        for (Move move : legalMoves) {
+            if (move.start() != index) {
+                continue;
+            }
+
+            if ((move.end() / 8) % 2 == 0) {
+                if ((move.end() % 8) % 2 == 0) {
+                    tileList[move.end()].setBackground(new Color(248, 109, 91));
                 } else {
-                    tileList[moveX][moveY].setBackground(new Color(218, 68, 50));
+                    tileList[move.end()].setBackground(new Color(218, 68, 50));
                 }
             } else {
-                if (moveX % 2 == 0) {
-                    tileList[moveX][moveY].setBackground(new Color(218, 68, 50));
+                if ((move.end() % 8) % 2 == 0) {
+                    tileList[move.end()].setBackground(new Color(218, 68, 50));
                 } else {
-                    tileList[moveX][moveY].setBackground(new Color(248, 109, 91));
+                    tileList[move.end()].setBackground(new Color(248, 109, 91));
                 }
             }
         }
     }
 
-    private void highlightClickedTile(int x, int y) {
-        if (board.getTile(x, y) != null) {
-            tileList[x][y].setBackground(new Color(51, 89, 128));
+    private void highlightClickedTile(int index) {
+        if (!board.isEmptyTile(index)) {
+            tileList[index].setBackground(new Color(51, 89, 128));
         }
     }
 
@@ -229,10 +250,12 @@ public class ChessGUI extends JFrame implements MouseListener {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String line;
         List<String[]> stockFishResults = new ArrayList<>();
-        int nr = 1;
         try {
-            while ((line = br.readLine()) != null)
-            {
+            while ((line = br.readLine()) != null) {
+                if (line.isEmpty()) {
+                    // Exit the loop if the input is empty (just Enter was pressed)
+                    break;
+                }
                 stockFishResults.add(line.split("\\s"));
             }
             br.close();
@@ -272,112 +295,88 @@ public class ChessGUI extends JFrame implements MouseListener {
         }
     }
 
-    private void makeMove(int x, int y) {
-        if (board.isPawn(lastClicked.get(0), lastClicked.get(1)) && (y == 7 || y == 0)) {
-            Scanner keyboard = new Scanner(System.in);
-            System.out.println("Choose what to promote to");
-            String type = keyboard.nextLine();
-            while (!type.equals("q") && !type.equals("b") && !type.equals("r") && !type.equals("n")) {
-                System.out.println("Invalid promotion, choose between q, b, r, n");
-                type = keyboard.nextLine();
-            }
-            promotePawn(x, y, type);
-            board.promote(lastClicked.get(0), lastClicked.get(1), x, y, type);
-            if (board.isGameOver()) {
-                System.out.println("game over");
-            }
-            else {
-                makeEngineMove();
-            }
+    private void makeMove(Move move) {
+        board.makeMove(move);
+        for (int index = 0; index < 64; index++) {
+            tileList[index].setIcon(null);
+            tileList[index].revalidate();
+        }
+        addPiecesToBoard();
+
+        if (board.getGameOver()) {
+            System.out.println("game over");
             return;
         }
-        movePiece(new Move(lastClicked.get(0), lastClicked.get(1), x, y));
-        movePieceInMemory(new Move(lastClicked.get(0), lastClicked.get(1), x, y));
-        if (board.isGameOver()) {
-            System.out.println("game over");
-        }
-        else {
+
+        if (engine != null) {
             makeEngineMove();
         }
-    }
 
-    private void killPiece(int x, int y) {
-        tileList[x][y].setIcon(null);
-        tileList[x][y].revalidate();
-    }
-
-    private void movePiece(Move move) {
-        int startX = move.startX();
-        int startY = move.startY();
-        int endX = move.endX();
-        int endY = move.endY();
-        int piece = determinePieceNumber(startX, startY);
-        //castle if true
-        if (board.isKing(startX, startY) && Math.abs(startX - endX) == 2) {
-            if (startX - endX < 0) {
-                tileList[startX + 1][startY].setIcon(piecesImages.get(piece + 4));
-                tileList[startX + 1][startY].revalidate();
-                tileList[startX + 3][startY].setIcon(null);
-                tileList[startX + 3][startY].revalidate();
-            } else {
-                tileList[startX - 1][startY].setIcon(piecesImages.get(piece + 4));
-                tileList[startX - 1][startY].revalidate();
-                tileList[startX - 4][startY].setIcon(null);
-                tileList[startX - 4][startY].revalidate();
-            }
-        }
-        //if piece is pawn that moved on x-axis (means capture) but endPosition is empty => en passant
-        if (board.isPawn(startX, startY) && startX != endX && board.getTile(endX, endY) == null) {
-            tileList[endX][startY].setIcon(null);
-            tileList[endX][startY].revalidate();
-        }
-        tileList[endX][endY].setIcon(piecesImages.get(piece));
-        tileList[endX][endY].revalidate();
-        killPiece(startX, startY);
-    }
-
-    private void movePieceInMemory(Move move) {
-        board.makeMove(move);
+        //generate new legal moves
+        legalMoves = MoveGenerator.generateMoves(board);
     }
 
     private void makeEngineMove() {
-        if (engine == null) {
-            return;
-        }
         Move move = engine.determineMove(board);
-        if (engine.getName().equals("counter")) {
+        if (engine.getName().equals("Counter")) {
             compareCountResults();
             return;
         }
-        movePiece(move);
-        movePieceInMemory(move);
+
+        makeMove(move);
     }
 
-    private void promotePawn(int x, int y, String type) {
-        int piece = determinePieceNumber(lastClicked.get(0), lastClicked.get(1), type);
-        tileList[lastClicked.get(0)][lastClicked.get(1)].setIcon(null);
-        tileList[lastClicked.get(0)][lastClicked.get(1)].revalidate();
-        tileList[x][y].setIcon(piecesImages.get(piece));
-        tileList[x][y].revalidate();
-    }
-
-    private void manageClick(int x, int y) {
-        if (lastClicked.size() == 0) {
+    private void manageClick(int index) {
+        //if this is the first time we click on a piece
+        if (lastClicked == -1) {
             resetColors();
-            highlightClickedTile(x, y);
-            showLegalMoves(x, y);
+            try {
+                highlightClickedTile(index);
+                showLegalMoves(index);
+            } catch (NullPointerException e) {
+                resetColors();
+                if (!board.isEmptyTile(index)) {
+                    highlightClickedTile(index);
+                }
+                return;
+            }
             if (legalMoves.size() > 0) {
-                lastClicked.add(x);
-                lastClicked.add(y);
+                lastClicked = index;
             }
             return;
         }
-        if (legalMoves.contains(Utils.formatXY(x, y))) {
-            makeMove(x, y);
-            legalMoves.clear();
+
+        //if we have selected a piece and clicked another tile
+        for (Move move : legalMoves) {
+            if (move.start() == lastClicked && move.end() == index) {
+                if (move.flag() == Move.PROMOTION) {
+                    System.out.println("Enter what to promote to: ");
+                    Scanner keyboard = new Scanner(System.in);
+                    String typeInput = keyboard.nextLine();
+                    while (!typeInput.equals("q") && !typeInput.equals("r") && !typeInput.equals("b") && !typeInput.equals("n")) {
+                        typeInput = keyboard.nextLine();
+                    }
+                    switch (typeInput) {
+                        case "q":
+                            move.setPromotion(Piece.QUEEN);
+                            break;
+                        case "r":
+                            move.setPromotion(Piece.ROOK);
+                            break;
+                        case "n":
+                            move.setPromotion(Piece.KNIGHT);
+                            break;
+                        case "b":
+                            move.setPromotion(Piece.BISHOP);
+                            break;
+                    }
+                }
+                makeMove(move);
+                break;
+            }
         }
-        lastClicked.clear();
-        legalMoves.clear();
+
+        lastClicked = -1;
         resetColors();
     }
 
@@ -400,7 +399,7 @@ public class ChessGUI extends JFrame implements MouseListener {
     @Override
     public void mouseClicked(MouseEvent e) {
         int[] realCoordinates = Utils.getXYCoordinatesFromClick(e.getX(), e.getY());
-        manageClick(realCoordinates[0], realCoordinates[1]);
+        manageClick(Utils.XYToIndex(realCoordinates[0], realCoordinates[1]));
     }
 
     @Override

@@ -1,7 +1,7 @@
 package engines;
 
-import board.Board;
-import board.Move;
+import game.Board;
+import game.Move;
 
 public interface Engine {
 
