@@ -398,13 +398,13 @@ public class ChessGUI extends JFrame implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        int[] realCoordinates = Utils.getXYCoordinatesFromClick(e.getX(), e.getY());
-        manageClick(Utils.XYToIndex(realCoordinates[0], realCoordinates[1]));
+
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-
+        int[] realCoordinates = Utils.getXYCoordinatesFromClick(e.getX(), e.getY());
+        manageClick(Utils.XYToIndex(realCoordinates[0], realCoordinates[1]));
     }
 
     @Override
