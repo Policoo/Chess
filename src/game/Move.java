@@ -3,7 +3,6 @@ package game;
 import utils.Utils;
 
 public class Move {
-
     public static final int NONE = 0;
     public static final int CASTLE = 1;
     public static final int ENPASSANT = 2;

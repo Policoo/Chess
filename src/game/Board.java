@@ -505,7 +505,7 @@ public class Board {
      *
      * @return a fen string of the current position.
      */
-    private String positionToFen() {
+    public String positionToFen() {
         StringBuilder fen = new StringBuilder();
         StringBuilder castleRightsWhite = new StringBuilder();
         StringBuilder castleRightsBlack = new StringBuilder();
@@ -516,13 +516,22 @@ public class Board {
             //count empty tiles
             if (tile[index] == 0) {
                 emptyRowCont++;
+                if ((index + 1) % 8 == 0) {
+                    fen.append(emptyRowCont).append("/");
+                    emptyRowCont = 0;
+                }
+
                 continue;
             }
+
             //if we get here we found a piece, so add how many empty tiles there were
             if (emptyRowCont > 0) {
                 fen.append(emptyRowCont);
                 emptyRowCont = 0;
             }
+
+            //represent piece as white or black and add to fen
+            fen.append(Piece.makeString(tile[index]));
 
             //add castling rights
             if (isKing(index)) {
@@ -532,6 +541,7 @@ public class Board {
                     castleRightsBlack.append(MoveGenerator.getCastleRights(index, this));
                 }
             }
+
             //add enPassant
             if (isPawn(index) && this.enPassant == index) {
                 if (getPieceColor(index) == Piece.WHITE) {
@@ -540,26 +550,23 @@ public class Board {
                     enPassant = Utils.getChessCoordinates(index - 8);
                 }
             }
-            //represent piece as white or black and add to fen
-            fen.append(Piece.makeString(tile[index]));
 
-            //add how many empty tiles were at the end, if any
-            if (emptyRowCont > 0) {
-                fen.append(emptyRowCont);
-                emptyRowCont = 0;
-            }
             //add the slash at the end of row
             if ((index + 1) % 8 == 0) {
                 fen.append("/");
             }
         }
+
         //constructing castleRights
         if (castleRightsWhite.length() == 0 && castleRightsBlack.length() == 0) {
             castleRights = "-";
         } else {
             castleRights = castleRightsWhite + castleRightsBlack.toString();
         }
-        fen.append(" ").append(colorToMove).append(" ").append(castleRights).append(" ").append(enPassant).append(" ").append(currentMove - lastCaptureOrPawnAdv).append(" ").append(currentMove / 2);
+
+        String colorToMoveString = (colorToMove == Piece.WHITE) ? "w" : "b";
+        fen.append(" ").append(colorToMoveString).append(" ").append(castleRights).append(" ").append(enPassant).
+                append(" ").append(currentMove - lastCaptureOrPawnAdv).append(" ").append(currentMove / 2);
         return fen.toString();
     }
 

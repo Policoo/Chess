@@ -1,8 +1,10 @@
 import gui.ChessGUI;
 
+import javax.swing.*;
+
 public class ChessGame {
 
     public static void main(String[] args) {
-       ChessGUI chessGUI = new ChessGUI();
+        SwingUtilities.invokeLater(ChessGUI::new);
     }
 }

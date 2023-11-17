@@ -12,10 +12,6 @@ public class MoveGenerator {
     private static HashMap<Integer, int[]> edgeOfBoard;
     private static HashMap<Integer, int[]> pieceDirections;
 
-    private MoveGenerator() {
-        throw new AssertionError();
-    }
-
     /**
      * Calculates and stores the distance to the edge of the board for each direction
      * for later use. Also initializes all directions that the pieces can go in.
@@ -388,7 +384,7 @@ public class MoveGenerator {
                             break;
                         }
                     } else {
-                        //if it is our color, or a king (if it gets to the king condition it means it's not out color)
+                        //if it is our color, or a king (if it gets to the king condition it means it's not our color)
                         if (board.isColor(curIndex, color) || board.isKing(curIndex)) {
                             lineOfSight.add(curIndex);
                         }
@@ -424,7 +420,7 @@ public class MoveGenerator {
         List<Integer> piecePositions = board.getPiecePositions(color);
 
         for (int index : piecePositions) {
-            //kings can't pin
+            //kings, knights and pawns can't pin
             if (board.isKing(index) || board.isKnight(index) || board.isPawn(index)) {
                 continue;
             }
@@ -514,7 +510,7 @@ public class MoveGenerator {
      * @param pinLines        List of lists containing all pins on the king.
      * @param attackedSquares List of lists containing line of sights of enemy pieces.
      * @param check           int that is -1 if the king is not in check, (indexCheck1 + 1) * 100 + indexCheck2
-     *                        if it is in double check or an index of attackedSquares
+     *                        if it is in double check or an index of attackedSquares if it is a normal check
      * @return true if move is legal, false otherwise.
      */
     private static boolean isLegalMove(Board board, int start, int end, List<List<Integer>> pinLines, List<List<Integer>> attackedSquares, int check) {

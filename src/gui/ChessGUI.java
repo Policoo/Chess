@@ -1,424 +1,448 @@
 package gui;
 
-import game.Board;
-import game.Move;
-import engines.Counter;
 import engines.Engine;
-import engines.Random;
 import engines.Greedy;
+import engines.Random;
 import game.Piece;
 import utils.MoveGenerator;
-import utils.Utils;
+import utils.StockFish;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.text.NumberFormatter;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Arrays;
 
-public class ChessGUI extends JFrame implements MouseListener {
-    private final JPanel panel;
-    private final JLabel[] tileList = new JLabel[64];
-    private final List<ImageIcon> piecesImages = new ArrayList<>();
-    private int lastClicked;
-    private List<Move> legalMoves = new ArrayList<>();
-    private final Board board;
-    private Engine engine;
+public class ChessGUI extends JFrame implements ActionListener {
+    private JPanel leftPanel;
+    private JButton resetButton;
+    private JTextField fenInput;
+    private JButton confirmFen;
+    private JFormattedTextField depthInput;
+    private JButton perftButton;
+    private JPanel dialogPanel;
+    private JButton flipBoard;
+
+    private JPanel rightPanel;
+    private JComboBox<Engine> evalEngineBox;
+    private JComboBox<Engine> opponentOptionsChoice;
+
+    private final GamePanel gamePanel;
 
     public ChessGUI() {
         MoveGenerator.initialize();
-        this.setTitle("ChessGUI");
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(527, 550);
-        this.setLayout(null);
-        this.setResizable(false);
-        panel = new JPanel();
-        panel.setLayout(null);
-        panel.setBounds(0, 0, 550, 550);
-        board = new Board();
-        fillPiecesImagesList();
-        generateBoard();
-        addPiecesToBoard();
-        this.add(panel);
-        panel.addMouseListener(this);
-        this.setVisible(true);
-        legalMoves = MoveGenerator.generateMoves(board);
-        lastClicked = -1;
+
+        setTitle("Chess");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setResizable(true);
+
+        buildLeftPanel();
+        buildRightPanel();
+        gamePanel = new GamePanel();
+
+        add(leftPanel, BorderLayout.WEST);
+        add(rightPanel, BorderLayout.EAST);
+        add(gamePanel, BorderLayout.CENTER);
+
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
-    public ChessGUI(String config) {
-        MoveGenerator.initialize();
-        this.setTitle("ChessGUI");
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(527, 550);
-        this.setLayout(null);
-        this.setResizable(false);
-        panel = new JPanel();
-        panel.setLayout(null);
-        panel.setBounds(0, 0, 550, 550);
-        board = new Board();
-        fillPiecesImagesList();
-        generateBoard();
-        addPiecesToBoard();
-        this.add(panel);
-        panel.addMouseListener(this);
-        this.setVisible(true);
-        initializeEngine(config);
-        if (engine.isWhite()) {
-            makeEngineMove();
-        }
-        lastClicked = -1;
+    private void buildLeftPanel() {
+        leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        leftPanel.setPreferredSize(new Dimension(300, 300));
+        leftPanel.setBackground(new Color(51, 51, 51));
+
+        //create new panel for reset and flip board buttons
+        JPanel topPanel = new JPanel();
+        topPanel.setPreferredSize(new Dimension(300, 35));
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
+        topPanel.setBackground(new Color(51, 51, 51));
+
+        //reset button
+        resetButton = new JButton("Reset");
+        resetButton.setBackground(new Color(183, 133, 111));
+        resetButton.setFocusPainted(false);
+        resetButton.setBorderPainted(false);
+        resetButton.addActionListener(this);
+
+        //flip board button
+        ImageIcon originalIcon = new ImageIcon("src/images/flip board.png");
+        Image originalImage = originalIcon.getImage();
+        Image resizedImage = originalImage.getScaledInstance(25, 25, Image.SCALE_SMOOTH);
+        ImageIcon resizedIcon = new ImageIcon(resizedImage);
+
+        flipBoard = new JButton(resizedIcon);
+        flipBoard.setBorderPainted(false);
+        flipBoard.setFocusPainted(false);
+        flipBoard.setContentAreaFilled(false);
+        flipBoard.addActionListener(this);
+
+        topPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+        topPanel.add(resetButton);
+        topPanel.add(Box.createRigidArea(new Dimension(185, 0)));
+        topPanel.add(flipBoard);
+
+        //create new panel for position from fen
+        JPanel fenPanel = new JPanel(new FlowLayout());
+        fenPanel.setPreferredSize(new Dimension(300, 60));
+        fenPanel.setBackground(new Color(51, 51, 51));
+
+        //text description for fen input
+        JLabel fenText = new JLabel("Set up board from fen string");
+        fenText.setFont(new Font("Ariel", Font.BOLD, 12));
+        fenText.setBackground(new Color(51, 51, 51));
+        fenText.setForeground(Color.WHITE);
+        fenText.setOpaque(true);
+
+        //input box for fen string
+        fenInput = new JTextField();
+        fenInput.setPreferredSize(new Dimension(200, 25));
+
+        //confirm button for fen string
+        confirmFen = new JButton("Confirm");
+        confirmFen.setBackground(new Color(183, 133, 111));
+        confirmFen.setFocusPainted(false);
+        confirmFen.setBorderPainted(false);
+        confirmFen.addActionListener(this);
+
+        fenPanel.add(fenText);
+        fenPanel.add(fenInput);
+        fenPanel.add(confirmFen);
+
+        //create new panel for perft
+        JPanel perftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        perftPanel.setPreferredSize(new Dimension(300, 35));
+        perftPanel.setBackground(new Color(51, 51, 51));
+
+        //input box for go perft
+        NumberFormat format = NumberFormat.getInstance();
+        NumberFormatter formatter = new NumberFormatter(format);
+        formatter.setValueClass(Integer.class);
+        formatter.setMinimum(1);
+
+        depthInput = new JFormattedTextField(formatter);
+        depthInput.setPreferredSize(new Dimension(10, 25));
+        depthInput.setColumns(10);
+
+        //go perft button
+        perftButton = new JButton("Go perft");
+        perftButton.setBackground(new Color(183, 133, 111));
+        perftButton.setFocusPainted(false);
+        perftButton.setBorderPainted(false);
+        perftButton.addActionListener(this);
+
+        perftPanel.add(depthInput);
+        perftPanel.add(perftButton);
+
+        //dialog description
+        JPanel dialogDesc = new JPanel(new FlowLayout(FlowLayout.CENTER)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(89, 89, 89));
+                g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            }
+        };
+        dialogDesc.setBackground(new Color(51, 51, 51));
+        dialogDesc.setPreferredSize(new Dimension(300, 25));
+
+        JLabel desc = new JLabel("DIALOG BOX");
+        desc.setForeground(Color.WHITE);
+        desc.setFont(new Font("Ariel", Font.BOLD, 12));
+        dialogDesc.add(desc);
+
+        //dialog panel
+        dialogPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(new Color(89, 89, 89));
+                g2d.drawRect(0, 0, getWidth() - 1, getHeight() - 1);
+            }
+        };
+        dialogPanel.setPreferredSize(new Dimension(300, 397));
+        dialogPanel.setBackground(new Color(51, 51, 51));
+        dialogPanel.setBorder(new EmptyBorder(1, 3, 1, 3));
+
+        leftPanel.add(topPanel);
+        leftPanel.add(fenPanel);
+        leftPanel.add(perftPanel);
+        leftPanel.add(dialogDesc);
+        leftPanel.add(dialogPanel);
     }
 
-    public ChessGUI(String fenString, String config) {
-        MoveGenerator.initialize();
-        this.setTitle("ChessGUI");
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(527, 550);
-        this.setLayout(null);
-        this.setResizable(false);
-        panel = new JPanel();
-        panel.setLayout(null);
-        panel.setBounds(0, 0, 550, 550);
-        board = new Board(fenString);
-        fillPiecesImagesList();
-        generateBoard();
-        addPiecesToBoard();
-        this.add(panel);
-        panel.addMouseListener(this);
-        this.setVisible(true);
-        initializeEngine(config);
-        if (engine.isWhite()) {
-            makeEngineMove();
-        }
-        lastClicked = -1;
+    private void buildRightPanel() {
+        rightPanel = new JPanel(new FlowLayout());
+        rightPanel.setBackground(new Color(51, 51, 51));
+        rightPanel.setPreferredSize(new Dimension(300, 100));
+
+        //panel for choosing engine eval
+        JPanel engineChoice = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        engineChoice.setPreferredSize(new Dimension(300, 35));
+        engineChoice.setBackground(new Color(51, 51, 51));
+
+        //combo box for choosing engine eval
+        Engine[] engineOptions = {new Random("b"), new Greedy("b")};
+        evalEngineBox = new JComboBox<>(engineOptions);
+
+        engineChoice.add(evalEngineBox);
+
+        //panel for showing top moves
+        JPanel evalPanel = new JPanel();
+        evalPanel.setPreferredSize(new Dimension(300, 100));
+        evalPanel.setLayout(new BoxLayout(evalPanel, BoxLayout.X_AXIS));
+        evalPanel.setBackground(new Color(51, 51, 51));
+
+        //moves
+        JLabel moveEval = new JLabel("+4.3");
+        moveEval.setBackground(Color.WHITE);
+        moveEval.setOpaque(true);
+
+        JLabel moveCoord = new JLabel("a1b1");
+        moveCoord.setBackground(Color.WHITE);
+        moveCoord.setOpaque(true);
+
+        evalPanel.add(moveEval);
+        evalPanel.add(moveCoord);
+
+        //panel for choosing what engine to play against
+        JPanel opponentChoicePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        opponentChoicePanel.setPreferredSize(new Dimension(300, 35));
+        opponentChoicePanel.setBackground(new Color(51, 51, 51));
+
+        //description for opponent box
+        JLabel opponentDesc = new JLabel("Play vs.");
+        opponentDesc.setBackground(new Color(51, 51, 51));
+        opponentDesc.setForeground(Color.WHITE);
+        opponentDesc.setFont(new Font("Ariel", Font.BOLD, 12));
+        opponentDesc.setOpaque(true);
+
+        //choice of engine opponent
+        Engine[] opponentOptions = {null, new Random("b"), new Greedy("b")};
+        opponentOptionsChoice = new JComboBox<>(opponentOptions);
+
+        opponentChoicePanel.add(opponentDesc);
+        opponentChoicePanel.add(opponentOptionsChoice);
+
+        rightPanel.add(engineChoice);
+        rightPanel.add(evalPanel);
+        rightPanel.add(opponentChoicePanel);
     }
 
-    public ChessGUI(String fenString, boolean yes) {
-        MoveGenerator.initialize();
-        this.setTitle("ChessGUI");
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-        this.setSize(527, 550);
-        this.setLayout(null);
-        this.setResizable(false);
-        panel = new JPanel();
-        panel.setLayout(null);
-        panel.setBounds(0, 0, 550, 550);
-        board = new Board(fenString);
-        fillPiecesImagesList();
-        generateBoard();
-        addPiecesToBoard();
-        this.add(panel);
-        panel.addMouseListener(this);
-        this.setVisible(true);
-        legalMoves = MoveGenerator.generateMoves(board);
-        lastClicked = -1;
+    private void printMessage(String message) {
+        dialogPanel.removeAll();
+        dialogPanel.revalidate();
+        dialogPanel.repaint();
+
+        JTextArea textArea = new JTextArea(message);
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
+        textArea.setEditable(false);
+        textArea.setFocusable(false);
+        textArea.setFont(new Font("Ariel", Font.BOLD, 12));
+        textArea.setBackground(new Color(51, 51, 51));
+        textArea.setForeground(new Color(255, 255, 255));
+        textArea.setPreferredSize(new Dimension(290, 60));
+        textArea.setOpaque(true);
+
+        dialogPanel.add(textArea);
     }
 
-    private void initializeEngine(String config) {
-        switch (config) {
-            case "random":
-                this.engine = new Random("b");
+    private void compareCountResults(String counterResults, String stockFishResults) {
+        String[] counterSplit = counterResults.split("~");
+        String[] stockFishSplit = stockFishResults.split("~");
+
+        boolean correct = true;
+        int numNodes = 0;
+
+        //remove the text already inside
+        dialogPanel.removeAll();
+        dialogPanel.revalidate();
+        dialogPanel.repaint();
+
+        //go through all the counter results and compare them with stockfish
+        for (int counterIndex = 0; counterIndex < counterSplit.length; counterIndex++) {
+            if (counterSplit[counterIndex].contains("Nodes")) {
+                String[] lineSplit = counterSplit[counterIndex].split(" ");
+                numNodes = Integer.parseInt(lineSplit[2]);
+
+                counterSplit[counterIndex] = "";
                 break;
-            case "counter":
-                this.engine = new Counter("w");
-                break;
-            default:
-                this.engine = new Greedy("b");
-        }
-    }
-
-    private void addPiecesToBoard() {
-        int piece;
-        for (int index = 0; index < 64; index++) {
-            if (board.isEmptyTile(index)) {
-                continue;
             }
 
-            piece = determinePieceNumber(index);
-            tileList[index].setIcon(piecesImages.get(piece));
-        }
-    }
+            String[] lineSplit = counterSplit[counterIndex].split(" ");
+            String move = lineSplit[0];
+            int count = Integer.parseInt(lineSplit[1]);
 
-    private int determinePieceNumber(int index) {
-        int piece;
-        switch (board.getPieceType(index)) {
-            case Piece.KING:
-                piece = 0;
-                break;
-            case Piece.QUEEN:
-                piece = 1;
-                break;
-            case Piece.BISHOP:
-                piece = 2;
-                break;
-            case Piece.KNIGHT:
-                piece = 3;
-                break;
-            case Piece.ROOK:
-                piece = 4;
-                break;
-            default:
-                piece = 5;
-        }
-        if (board.isColor(index, Piece.BLACK)) {
-            piece += 6;
-        }
-        return piece;
-    }
-
-    private void generateBoard() {
-        JLabel jLabel;
-        boolean white = true;
-        for (int index = 0; index < 64; index++) {
-            jLabel = new JLabel();
-            if (white) {
-                jLabel.setBackground(new Color(240, 217, 181));
-            } else {
-                jLabel.setBackground(new Color(181, 136, 99));
-            }
-            jLabel.setOpaque(true);
-            jLabel.setHorizontalAlignment(JLabel.CENTER);
-            jLabel.setBounds((index % 8) * 64, (index / 8) * 64, 64, 64);
-            panel.add(jLabel);
-            tileList[index] = jLabel;
-            if (index % 8 != 7) {
-                white = !white;
-            }
-        }
-    }
-
-    private void resetColors() {
-        boolean white = true;
-        for (int index = 0; index < 64; index++) {
-            if (white) {
-                tileList[index].setBackground(new Color(240, 217, 181));
-            } else {
-                tileList[index].setBackground(new Color(181, 136, 99));
-            }
-
-            if (index % 8 != 7) {
-                white = !white;
-            }
-        }
-    }
-
-    private void showLegalMoves(int index) throws NullPointerException {
-        if (legalMoves.size() == 0) {
-            return;
-        }
-
-        for (Move move : legalMoves) {
-            if (move.start() != index) {
-                continue;
-            }
-
-            if ((move.end() / 8) % 2 == 0) {
-                if ((move.end() % 8) % 2 == 0) {
-                    tileList[move.end()].setBackground(new Color(248, 109, 91));
-                } else {
-                    tileList[move.end()].setBackground(new Color(218, 68, 50));
-                }
-            } else {
-                if ((move.end() % 8) % 2 == 0) {
-                    tileList[move.end()].setBackground(new Color(218, 68, 50));
-                } else {
-                    tileList[move.end()].setBackground(new Color(248, 109, 91));
-                }
-            }
-        }
-    }
-
-    private void highlightClickedTile(int index) {
-        if (!board.isEmptyTile(index)) {
-            tileList[index].setBackground(new Color(51, 89, 128));
-        }
-    }
-
-    private void compareCountResults() {
-        String[] results = engine.getResults().split("`");
-        System.out.println("Enter StockFish results");
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        String line;
-        List<String[]> stockFishResults = new ArrayList<>();
-        try {
-            while ((line = br.readLine()) != null) {
-                if (line.isEmpty()) {
-                    // Exit the loop if the input is empty (just Enter was pressed)
-                    break;
-                }
-                stockFishResults.add(line.split("\\s"));
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        boolean matching = true;
-        for (String result : results) {
             boolean found = false;
-            String[] splitResult = result.split(":");
-            for (String[] stockFishResult : stockFishResults) {
-                String resultPosition = splitResult[0] + ":";
-                if (!resultPosition.equals(stockFishResult[0])) {
+            for (int stockFishIndex = 0; stockFishIndex < stockFishSplit.length; stockFishIndex++) {
+                if (!stockFishSplit[stockFishIndex].contains(move)) {
                     continue;
                 }
+
+                String[] split = stockFishSplit[stockFishIndex].split(" ");
+                int fishCount = Integer.parseInt(split[1]);
+
+                JLabel label;
+                if (count == fishCount) {
+                    label = new JLabel(counterSplit[counterIndex] + ", ");
+                    label.setFont(new Font("Ariel", Font.BOLD, 12));
+                    label.setBackground(new Color(51, 51, 51));
+                    label.setForeground(new Color(66, 131, 0));
+                    label.setOpaque(true);
+                } else {
+                    label = new JLabel(counterSplit[counterIndex] + " (Stockfish: " + fishCount + "), ");
+                    label.setFont(new Font("Ariel", Font.BOLD, 12));
+                    label.setBackground(new Color(51, 51, 51));
+                    label.setForeground(new Color(169, 0, 0));
+                    label.setOpaque(true);
+
+                    correct = false;
+                }
+
+                dialogPanel.add(label);
+
                 found = true;
-                if (Integer.parseInt(stockFishResult[1]) == Integer.parseInt(splitResult[1])) {
-                    System.out.println(splitResult[0] + " is matching with " + splitResult[1] + " positions");
-                    break;
-                }
-                matching = false;
-                System.out.print(splitResult[0] + " is not matching, ");
-                if (Integer.parseInt(stockFishResult[1]) > Integer.parseInt(splitResult[1])) {
-                    System.out.println("StockFish found " + Math.abs(Integer.parseInt(stockFishResult[1]) - Integer.parseInt(splitResult[1])) + " extra move(s)");
-                    break;
-                }
-                System.out.println("StockFish found " + Math.abs(Integer.parseInt(stockFishResult[1]) - Integer.parseInt(splitResult[1])) + " fewer move(s)");
+                stockFishSplit[stockFishIndex] = "";
                 break;
             }
-            if (!found) {
-                System.out.println(splitResult[0] + " is in StockFish results, but not in counter");
-                matching = false;
+
+            if (found) {
+                counterSplit[counterIndex] = "";
             }
         }
-        if (matching) {
-            System.out.println("Results are correct");
+
+        //print appropriate messages if illegal moves were found or if a move was missed
+        List<String> notFound = new ArrayList<>();
+        for (String s : counterSplit) {
+            if (s.equals("")) {
+                continue;
+            }
+
+            String move = s.split(" ")[0];
+            move = move.split(":")[0];
+            notFound.add(move);
+
+            correct = false;
         }
+
+        if (notFound.size() > 0) {
+            StringBuilder text = new StringBuilder("Illegal moves found: ");
+            for (String move : notFound) {
+                text.append(move).append(", ");
+            }
+
+            JLabel label = new JLabel(text.toString());
+            label.setPreferredSize(new Dimension(290, 25));
+            label.setFont(new Font("Ariel", Font.BOLD, 12));
+            label.setForeground(new Color(255, 255, 255));
+            dialogPanel.add(label);
+        }
+
+        notFound.clear();
+        for (String s : stockFishSplit) {
+            if (s.equals("")) {
+                continue;
+            }
+
+            String move = s.split(" ")[0];
+            move = move.split(":")[0];
+            notFound.add(move);
+
+            correct = false;
+        }
+
+        if (notFound.size() > 0) {
+            StringBuilder text = new StringBuilder("Missed moves: ");
+            for (String move : notFound) {
+                text.append(move).append(", ");
+            }
+
+            JLabel label = new JLabel(text.toString());
+            label.setPreferredSize(new Dimension(290, 25));
+            label.setFont(new Font("Ariel", Font.BOLD, 12));
+            label.setForeground(new Color(255, 255, 255));
+            dialogPanel.add(label);
+        }
+
+        if (correct) {
+            JTextArea textArea = new JTextArea("RESULTS WERE CORRECT! Nodes searched: " + numNodes);
+            textArea.setPreferredSize(new Dimension(290, 35));
+            textArea.setWrapStyleWord(true);
+            textArea.setLineWrap(true);
+            textArea.setEditable(false);
+            textArea.setFocusable(false);
+            textArea.setFont(new Font("Ariel", Font.BOLD, 12));
+            textArea.setForeground(new Color(66, 131, 0));
+            textArea.setOpaque(false);
+            dialogPanel.add(textArea);
+        }
+
+        dialogPanel.revalidate();
+        dialogPanel.repaint();
     }
 
-    private void makeMove(Move move) {
-        board.makeMove(move);
-        for (int index = 0; index < 64; index++) {
-            tileList[index].setIcon(null);
-            tileList[index].revalidate();
-        }
-        addPiecesToBoard();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == flipBoard) {
+            gamePanel.flipBoard();
 
-        if (board.getGameOver()) {
-            System.out.println("game over");
+            printMessage("You are now playing as " + Piece.getColorString(gamePanel.getPerspective()));
             return;
         }
 
-        if (engine != null) {
-            makeEngineMove();
-        }
+        if (e.getSource() == resetButton) {
+            gamePanel.resetBoard();
 
-        //generate new legal moves
-        legalMoves = MoveGenerator.generateMoves(board);
-    }
-
-    private void makeEngineMove() {
-        Move move = engine.determineMove(board);
-        if (engine.getName().equals("Counter")) {
-            compareCountResults();
+            printMessage("Board has been reset");
             return;
         }
 
-        makeMove(move);
-    }
-
-    private void manageClick(int index) {
-        //if this is the first time we click on a piece
-        if (lastClicked == -1) {
-            resetColors();
-            try {
-                highlightClickedTile(index);
-                showLegalMoves(index);
-            } catch (NullPointerException e) {
-                resetColors();
-                if (!board.isEmptyTile(index)) {
-                    highlightClickedTile(index);
-                }
+        if (e.getSource() == confirmFen) {
+            String fenString = fenInput.getText();
+            if (fenString.equals("")) {
+                printMessage("Invalid fen string");
                 return;
             }
-            if (legalMoves.size() > 0) {
-                lastClicked = index;
+
+            try {
+                gamePanel.boardFromFen(fenString);
+            } catch (IndexOutOfBoundsException | NumberFormatException ex) {
+                printMessage("Invalid fen string");
+                return;
             }
+            printMessage("Board has been constructed from " + fenString);
             return;
         }
 
-        //if we have selected a piece and clicked another tile
-        for (Move move : legalMoves) {
-            if (move.start() == lastClicked && move.end() == index) {
-                if (move.flag() == Move.PROMOTION) {
-                    System.out.println("Enter what to promote to: ");
-                    Scanner keyboard = new Scanner(System.in);
-                    String typeInput = keyboard.nextLine();
-                    while (!typeInput.equals("q") && !typeInput.equals("r") && !typeInput.equals("b") && !typeInput.equals("n")) {
-                        typeInput = keyboard.nextLine();
-                    }
-                    switch (typeInput) {
-                        case "q":
-                            move.setPromotion(Piece.QUEEN);
-                            break;
-                        case "r":
-                            move.setPromotion(Piece.ROOK);
-                            break;
-                        case "n":
-                            move.setPromotion(Piece.KNIGHT);
-                            break;
-                        case "b":
-                            move.setPromotion(Piece.BISHOP);
-                            break;
-                    }
-                }
-                makeMove(move);
-                break;
+        if (e.getSource() == perftButton) {
+            try {
+                int depth = Integer.parseInt(depthInput.getText());
+                String stockFishResults = StockFish.goPerft(depth, gamePanel.getFen());
+                String counterResults = gamePanel.goPerft(depth);
+                compareCountResults(counterResults, stockFishResults);
+            } catch (IOException | InterruptedException ex) {
+                System.out.println("Error: StockFish is fucked!");
+                System.out.println(Arrays.toString(ex.getStackTrace()));
+                return;
+            } catch (NumberFormatException ex) {
+                return;
             }
         }
 
-        lastClicked = -1;
-        resetColors();
-    }
+        if (e.getSource() == opponentOptionsChoice) {
 
-    private void fillPiecesImagesList() {
-        BufferedImage all = null;
-        try {
-            all = ImageIO.read(new File("src/pieces/chess pieces.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-        for (int y = 0; y < 400; y += 200) {
-            for (int x = 0; x < 1200; x += 200) {
-                assert all != null;
-                piecesImages.add(new ImageIcon(all.getSubimage(x, y, 200, 200).getScaledInstance(64, 64, BufferedImage.SCALE_SMOOTH)));
-            }
-        }
-    }
-
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-        int[] realCoordinates = Utils.getXYCoordinatesFromClick(e.getX(), e.getY());
-        manageClick(Utils.XYToIndex(realCoordinates[0], realCoordinates[1]));
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-
     }
 }

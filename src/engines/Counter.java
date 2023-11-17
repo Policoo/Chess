@@ -8,43 +8,27 @@ import utils.Utils;
 import java.util.HashMap;
 import java.util.List;
 
-public class Counter implements Engine {
-    private final String name = "Counter";
-    private final String color;
-    private final int depth;
+public class Counter {
     private StringBuilder results;
+    private int depth;
 
-    public Counter(String color) {
-        this.color = color;
-        this.depth = 5;
+    public Counter() {
+
     }
 
-    @Override
-    public String getResults() {
-        return this.results.toString();
-    }
-
-    @Override
-    public Move determineMove(Board board) {
+    public String goPerft(Board board, int depth) {
+        this.depth = depth;
         this.results = new StringBuilder();
-        System.out.println(moveGenerationTest(depth, board));
-        return new Move();
+        int numNodes = countPositions(depth, board);
+        results.append("Nodes searched: ").append(numNodes).append("~");
+        return results.toString();
     }
 
-    @Override
-    public boolean isWhite() {
-        return color.equals("w");
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    private int moveGenerationTest(int depth, Board board) {
+    private int countPositions(int depth, Board board) {
         if (depth == 0) {
             return 1;
         }
+
 //        System.out.println("FOR THIS BOARD");
 //        System.out.println(board);
 //        System.out.println("THESE LEGAL MOVES: ");
@@ -61,14 +45,14 @@ public class Counter implements Engine {
             int numBeforeLoop = numPositions;
             if (depth == this.depth) {
                 System.out.print(move.toString() + ": ");
-                results.append(move.toString()).append(":");
+                results.append(move.toString()).append(": ");
             }
             boardCopy.makeMove(move);
-            numPositions += moveGenerationTest(depth - 1, boardCopy);
+            numPositions += countPositions(depth - 1, boardCopy);
             boardCopy = board.deepCopy();
             if (depth == this.depth) {
                 System.out.println(numPositions - numBeforeLoop);
-                results.append(numPositions - numBeforeLoop).append("`");
+                results.append(numPositions - numBeforeLoop).append("~");
             }
         }
 

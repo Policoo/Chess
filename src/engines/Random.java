@@ -36,4 +36,9 @@ public class Random implements Engine{
     public String getResults() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
