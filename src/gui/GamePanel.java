@@ -23,11 +23,8 @@ import java.util.Scanner;
 public class GamePanel extends JPanel implements MouseListener {
     private final JLabel[] tileList;
 
-    private JPanel mainNorth;
-    private JPanel mainEast;
-    private JPanel mainSouth;
-    private JPanel mainWest;
-    private JPanel mainCentre;
+    private final JPanel mainSouth;
+    private final JPanel mainWest;
 
     private List<ImageIcon> piecesImages;
     private List<Move> legalMoves;
@@ -43,11 +40,11 @@ public class GamePanel extends JPanel implements MouseListener {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(552, 552));
 
-        mainNorth = new JPanel();
-        mainEast = new JPanel();
+        JPanel mainNorth = new JPanel();
+        JPanel mainEast = new JPanel();
         mainSouth = new JPanel();
         mainWest = new JPanel();
-        mainCentre = new JPanel(new GridLayout(8, 8));
+        JPanel mainCentre = new JPanel(new GridLayout(8, 8));
 
         mainNorth.setBackground(new Color(42, 42, 42));
         mainEast.setBackground(new Color(42, 42, 42));

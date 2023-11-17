@@ -422,6 +422,8 @@ public class ChessGUI extends JFrame implements ActionListener {
                 printMessage("Invalid fen string");
                 return;
             }
+
+            fenInput.setText("");
             printMessage("Board has been constructed from " + fenString);
             return;
         }
@@ -429,6 +431,8 @@ public class ChessGUI extends JFrame implements ActionListener {
         if (e.getSource() == perftButton) {
             try {
                 int depth = Integer.parseInt(depthInput.getText());
+                depthInput.setText("");
+
                 String stockFishResults = StockFish.goPerft(depth, gamePanel.getFen());
                 String counterResults = gamePanel.goPerft(depth);
                 compareCountResults(counterResults, stockFishResults);
