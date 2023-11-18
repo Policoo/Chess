@@ -18,11 +18,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class GamePanel extends JPanel implements MouseListener {
     private final JLabel[] tileList;
-
     private final JPanel mainSouth;
     private final JPanel mainWest;
 
@@ -35,6 +33,8 @@ public class GamePanel extends JPanel implements MouseListener {
     private final Counter counter;
 
     private int perspective;
+    private final List<Integer> promotionTiles;
+    private Move promotionMove;
 
     public GamePanel() {
         setLayout(new BorderLayout());
@@ -80,6 +80,7 @@ public class GamePanel extends JPanel implements MouseListener {
         perspective = Piece.WHITE;
         addPiecesToBoard();
         counter = new Counter();
+        promotionTiles = new ArrayList<>();
         legalMoves = MoveGenerator.generateMoves(board);
     }
 
@@ -326,23 +327,62 @@ public class GamePanel extends JPanel implements MouseListener {
         }
 
         if (engine != null) {
-            makeEngineMove();
+            move = engine.determineMove(board);
+            makeMove(move);
         }
 
         //generate new legal moves
         legalMoves = MoveGenerator.generateMoves(board);
     }
 
-    private void makeEngineMove() {
-        Move move = engine.determineMove(board);
-        if (engine.getName().equals("Counter")) {
-            return;
+    private void manageClick(int index) {
+        //special case for promotions
+        if (promotionTiles.size() > 0) {
+            //if we didn't promote, but clicked outside the options
+            if (!promotionTiles.contains(index)) {
+                promotionTiles.clear();
+                resetColors();
+                addPiecesToBoard();
+                return;
+            }
+
+            if (index / 8 == 0 || index / 8 == 7) {
+                promotionMove.setPromotion(Piece.QUEEN);
+                makeMove(promotionMove);
+                promotionTiles.clear();
+                resetColors();
+                addPiecesToBoard();
+                return;
+            }
+
+            if (index / 8 == 1 || index / 8 == 6) {
+                promotionMove.setPromotion(Piece.ROOK);
+                makeMove(promotionMove);
+                promotionTiles.clear();
+                resetColors();
+                addPiecesToBoard();
+                return;
+            }
+
+            if (index / 8 == 2 || index / 8 == 5) {
+                promotionMove.setPromotion(Piece.BISHOP);
+                makeMove(promotionMove);
+                promotionTiles.clear();
+                resetColors();
+                addPiecesToBoard();
+                return;
+            }
+
+            if (index / 8 == 3 || index / 8 == 4) {
+                promotionMove.setPromotion(Piece.KNIGHT);
+                makeMove(promotionMove);
+                promotionTiles.clear();
+                resetColors();
+                addPiecesToBoard();
+                return;
+            }
         }
 
-        makeMove(move);
-    }
-
-    private void manageClick(int index) {
         //if this is the first time we click on a piece
         if (lastClicked == -1) {
             resetColors();
@@ -370,26 +410,9 @@ public class GamePanel extends JPanel implements MouseListener {
 
             if (move.start() == perLastClicked && move.end() == perIndex) {
                 if (move.flag() == Move.PROMOTION) {
-                    System.out.println("Enter what to promote to: ");
-                    Scanner keyboard = new Scanner(System.in);
-                    String typeInput = keyboard.nextLine();
-                    while (!typeInput.equals("q") && !typeInput.equals("r") && !typeInput.equals("b") && !typeInput.equals("n")) {
-                        typeInput = keyboard.nextLine();
-                    }
-                    switch (typeInput) {
-                        case "q":
-                            move.setPromotion(Piece.QUEEN);
-                            break;
-                        case "r":
-                            move.setPromotion(Piece.ROOK);
-                            break;
-                        case "n":
-                            move.setPromotion(Piece.KNIGHT);
-                            break;
-                        case "b":
-                            move.setPromotion(Piece.BISHOP);
-                            break;
-                    }
+                    getPromotion(move.end());
+                    promotionMove = move;
+                    return;
                 }
 
                 makeMove(move);
@@ -399,6 +422,42 @@ public class GamePanel extends JPanel implements MouseListener {
 
         lastClicked = -1;
         resetColors();
+    }
+
+    private void getPromotion(int index) {
+        List<ImageIcon> promotionPieces = new ArrayList<>();
+        if (index < 8) {
+            promotionPieces.add(piecesImages.get(1));
+            promotionPieces.add(piecesImages.get(4));
+            promotionPieces.add(piecesImages.get(2));
+            promotionPieces.add(piecesImages.get(3));
+        } else {
+            promotionPieces.add(piecesImages.get(7));
+            promotionPieces.add(piecesImages.get(10));
+            promotionPieces.add(piecesImages.get(8));
+            promotionPieces.add(piecesImages.get(9));
+        }
+
+        if (perspective == Piece.WHITE) {
+            int direction = (index < 8) ? 8 : -8;
+            drawPromotionOptions(index, direction, promotionPieces);
+        }
+
+        if (perspective == Piece.BLACK) {
+            int direction = (index < 8) ? -8 : 8;
+            int tileIndex = 63 - index;
+            drawPromotionOptions(tileIndex, direction, promotionPieces);
+        }
+    }
+
+    private void drawPromotionOptions(int index, int direction, List<ImageIcon> promotionPieces) {
+        for (int step = 0; step < 4; step++) {
+            int curIndex = index + (direction * step);
+            tileList[curIndex].setBackground(Color.WHITE);
+            tileList[curIndex].setIcon(promotionPieces.get(step));
+
+            promotionTiles.add(curIndex);
+        }
     }
 
     @Override

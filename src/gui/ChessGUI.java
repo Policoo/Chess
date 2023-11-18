@@ -41,7 +41,7 @@ public class ChessGUI extends JFrame implements ActionListener {
         setTitle("Chess");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setResizable(true);
+        setResizable(false);
 
         buildLeftPanel();
         buildRightPanel();
@@ -437,10 +437,10 @@ public class ChessGUI extends JFrame implements ActionListener {
                 String counterResults = gamePanel.goPerft(depth);
                 compareCountResults(counterResults, stockFishResults);
             } catch (IOException | InterruptedException ex) {
-                System.out.println("Error: StockFish is fucked!");
-                System.out.println(Arrays.toString(ex.getStackTrace()));
+                printMessage("StockFish is fucked");
                 return;
             } catch (NumberFormatException ex) {
+                printMessage("You did something wrong");
                 return;
             }
         }
