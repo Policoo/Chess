@@ -204,11 +204,61 @@ public class MoveGenerator {
                         moves.addAll(knightMoves);
                     }
                     break;
-                default:
-                    return moves;
             }
         }
         return moves;
+    }
+
+    public static boolean legalMovesExist(Board board, List<List<Integer>> attackedSquares) {
+        int color = board.getColorToMove();
+        int otherColor = (color == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        List<Integer> piecePositions = board.getPiecePositions(color);
+        List<List<Integer>> pinLines = getPins(board, otherColor);
+        int check = getCheckLineIndex(board, attackedSquares);
+
+        for (int index : piecePositions) {
+            switch (board.getPieceType(index)) {
+                case Piece.PAWN:
+                    List<Move> pawnMoves = generatePawnMoves(index, board, pinLines, attackedSquares, check);
+                    if (pawnMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+                case Piece.BISHOP:
+                    List<Move> bishopMoves = generateBishopMoves(index, board, pinLines, attackedSquares, check);
+                    if (bishopMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+                case Piece.ROOK:
+                    List<Move> rookMoves = generateRookMoves(index, board, pinLines, attackedSquares, check);
+                    if (rookMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+                case Piece.QUEEN:
+                    List<Move> queenMoves = generateQueenMoves(index, board, pinLines, attackedSquares, check);
+                    if (queenMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+                case Piece.KING:
+                    List<Move> kingMoves = generateKingMoves(index, board, pinLines, attackedSquares, check);
+                    kingMoves.addAll(checkCastling(index, board, pinLines, attackedSquares, check));
+                    if (kingMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+                case Piece.KNIGHT:
+                    List<Move> knightMoves = generateKnightMoves(index, board, pinLines, attackedSquares, check);
+                    if (knightMoves.size() > 0) {
+                        return true;
+                    }
+                    break;
+            }
+        }
+
+        return false;
     }
 
     private static List<Move> generatePawnMoves(int index, Board board, List<List<Integer>> pinLines, List<List<Integer>> attackedSquares, int check) {
@@ -552,7 +602,7 @@ public class MoveGenerator {
 
                 //pawns only check for the square in front of them
                 if (board.isPawn(index)) {
-                    return true;
+                    continue;
                 }
 
                 int direction = attackedSquares.get(line).get(1) - index;

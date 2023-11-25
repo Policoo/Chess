@@ -26,7 +26,7 @@ public class Utils {
     public static int getIndexFromChessCoordinates(String coordinates)  {
         char[] chars = coordinates.toCharArray();
         int x = (int) chars[0] - 97;
-        int y = 8 * (Integer.parseInt(String.valueOf(chars[1])) - 1);
+        int y = 8 * (8 - Integer.parseInt(String.valueOf(chars[1])));
 
         return y + x;
     }

@@ -4,36 +4,42 @@ import java.util.*;
 
 import utils.MoveGenerator;
 import utils.Utils;
+import utils.Zobrist;
 
 public class Board {
     private final int[] tile;
+    private HashMap<Integer, List<Integer>> piecePositions;
+
     private int enPassant;
-    private int colorToMove;
+    private int castleRights;
+
     private int currentMove;
     private int lastCaptureOrPawnAdv;
-    private HashMap<String, Integer> positionHistory;
+    private int colorToMove;
+
+
+    private HashMap<Long, Integer> positionHistory;
     private HashMap<Integer, Integer> remainingPieces;
-    private HashMap<Integer, List<Integer>> piecePositions;
     private boolean gameOver;
-    private boolean castleQueenSideW;
-    private boolean castleKingSideW;
-    private boolean castleQueenSideB;
-    private boolean castleKingSideB;
+    private long hash;
+
+    private final List<Integer> boardState;
+
 
     public Board() {
         positionHistory = new HashMap<>();
         remainingPieces = new HashMap<>();
         gameOver = false;
-        currentMove = 0;
-        lastCaptureOrPawnAdv = 0;
-        enPassant = -1;
+        currentMove = 2;
+        lastCaptureOrPawnAdv = 1;
+        enPassant = 0;
         tile = new int[64];
         colorToMove = Piece.WHITE;
+        castleRights = 15;
+        boardState = new ArrayList<>();
+
         reset();
-        castleKingSideW = true;
-        castleQueenSideW = true;
-        castleKingSideB = true;
-        castleQueenSideB = true;
+        hashPosition();
     }
 
     public Board(String fenString) {
@@ -42,14 +48,14 @@ public class Board {
         gameOver = false;
         currentMove = 0;
         lastCaptureOrPawnAdv = 0;
-        enPassant = -1;
+        enPassant = 0;
         tile = new int[64];
         colorToMove = Piece.WHITE;
-        castleKingSideW = false;
-        castleQueenSideW = false;
-        castleKingSideB = false;
-        castleQueenSideB = false;
+        castleRights = 0;
+        boardState = new ArrayList<>();
+
         makeBoardFromFen(fenString);
+        hashPosition();
     }
 
     /**
@@ -60,16 +66,13 @@ public class Board {
     public Board deepCopy() {
         Board boardCopy = new Board();
         System.arraycopy(this.tile, 0, boardCopy.tile, 0, 64);
-        if (enPassant >= 0) {
+        if (enPassant > 0) {
             boardCopy.setEnPassant(enPassant);
         }
         boardCopy.setColorToMove(colorToMove);
         boardCopy.setCurrentMove(currentMove);
         boardCopy.setLastCaptureOrPawnAdv(lastCaptureOrPawnAdv);
-        boardCopy.castleKingSideW = castleKingSideW;
-        boardCopy.castleKingSideB = castleKingSideB;
-        boardCopy.castleQueenSideW = castleQueenSideW;
-        boardCopy.castleQueenSideB = castleQueenSideB;
+        boardCopy.castleRights = castleRights;
 
         boardCopy.setPositionHistory(new HashMap<>(positionHistory));
         boardCopy.setRemainingPieces(new HashMap<>(remainingPieces));
@@ -150,11 +153,16 @@ public class Board {
      * Updates the gameOver variable according to the current game state
      */
     private void checkGameOver() {
-        List<Move> moves = MoveGenerator.generateMoves(this);
         int color = (colorToMove == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
         List<List<Integer>> attackedSquares = MoveGenerator.getAttackedSquares(this, color);
 
-        if (isCheckMate(attackedSquares, moves) || isDraw(attackedSquares, moves)) {
+        //if no legal moves exist, it's either checkmate or stalemate
+        if (!MoveGenerator.legalMovesExist(this, attackedSquares)) {
+            gameOver = true;
+            return;
+        }
+
+        if (isRepetition() || fiftyMoveRule() || insufficientMaterial()) {
             gameOver = true;
         }
     }
@@ -164,23 +172,9 @@ public class Board {
      *
      * @return true if its checkmate, false otherwise.
      */
-    private boolean isCheckMate(List<List<Integer>> attackedSquares, List<Move> moves) {
-        if (moves.size() > 0) {
-            return false;
-        }
-
+    private boolean isCheckMate(List<List<Integer>> attackedSquares) {
         int color = (colorToMove == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
         return isCheck(color, attackedSquares);
-    }
-
-    /**
-     * Determines if the game is a draw, based on stalemate, repetition rule, fifty
-     * move rule or insufficient material rule.
-     *
-     * @return true if it's a draw, false otherwise.
-     */
-    private boolean isDraw(List<List<Integer>> attackedSquares, List<Move> moves) {
-        return isStalemate(attackedSquares, moves) || isRepetition() || fiftyMoveRule() || insufficientMaterial();
     }
 
     /**
@@ -188,11 +182,7 @@ public class Board {
      *
      * @return true if it's stalemate, false otherwise.
      */
-    private boolean isStalemate(List<List<Integer>> attackedSquares, List<Move> moves) {
-        if (moves.size() > 0) {
-            return false;
-        }
-
+    private boolean isStalemate(List<List<Integer>> attackedSquares) {
         int color = (colorToMove == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
         return !isCheck(color, attackedSquares);
     }
@@ -203,10 +193,7 @@ public class Board {
      * @return true if it's the 3 repetition rule, false otherwise.
      */
     private boolean isRepetition() {
-        //only add pieces position and color to move to history
-        String[] splitFen = positionToFen().split(" ");
-        String fenHistory = splitFen[0] + " " + splitFen[1];
-        return positionHistory.containsKey(fenHistory) && positionHistory.get(fenHistory) > 1;
+        return positionHistory.containsKey(hash) && positionHistory.get(hash) > 2;
     }
 
     /**
@@ -227,11 +214,13 @@ public class Board {
     private boolean insufficientMaterial() {
         boolean insufficientMaterialWhite = false;
         boolean insufficientMaterialBlack = false;
+
         //if there are pawns on the board there is sufficient material
         if (remainingPieces.containsKey(Piece.createPiece(Piece.PAWN, Piece.WHITE))
                 || remainingPieces.containsKey(Piece.createPiece(Piece.PAWN, Piece.BLACK))) {
             return false;
         }
+
         //if white or black has rooks or queens there is sufficient material
         if (remainingPieces.containsKey(Piece.createPiece(Piece.QUEEN, Piece.WHITE))
                 || remainingPieces.containsKey(Piece.createPiece(Piece.ROOK, Piece.WHITE)) ||
@@ -239,27 +228,36 @@ public class Board {
                 remainingPieces.containsKey(Piece.createPiece(Piece.ROOK, Piece.BLACK))) {
             return false;
         }
+
         //if white only has a king and one/two knight(s)
         if (remainingPieces.containsKey(Piece.createPiece(Piece.KNIGHT, Piece.WHITE)) && !remainingPieces.containsKey(Piece.createPiece(Piece.BISHOP, Piece.WHITE))) {
             insufficientMaterialWhite = true;
         }
+
         //if white only has a king and a bishop
         if (remainingPieces.containsKey(Piece.createPiece(Piece.BISHOP, Piece.WHITE)) &&
                 !remainingPieces.containsKey(Piece.createPiece(Piece.KNIGHT, Piece.WHITE)) &&
                 remainingPieces.get(Piece.createPiece(Piece.BISHOP, Piece.WHITE)) == 1) {
             insufficientMaterialWhite = true;
         }
+
         //if black only has a king and one/two knight(s)
         if (remainingPieces.containsKey(Piece.createPiece(Piece.KNIGHT, Piece.BLACK)) && !remainingPieces.containsKey(Piece.createPiece(Piece.BISHOP, Piece.BISHOP))) {
             insufficientMaterialBlack = true;
         }
+
         //if black only has a king and a bishop
         if (remainingPieces.containsKey(Piece.createPiece(Piece.BISHOP, Piece.BLACK)) &&
                 !remainingPieces.containsKey(Piece.createPiece(Piece.KNIGHT, Piece.BLACK)) &&
                 remainingPieces.get(Piece.createPiece(Piece.BISHOP, Piece.BLACK)) == 1) {
             insufficientMaterialBlack = true;
         }
+
         return insufficientMaterialWhite && insufficientMaterialBlack;
+    }
+
+    public long getHash() {
+        return hash;
     }
 
     /**
@@ -268,9 +266,19 @@ public class Board {
      * @param move Move you want to make
      */
     public void makeMove(Move move) {
+        currentMove++;
         int flag = move.flag();
         int start = move.start();
         int end = move.end();
+
+        //save current board state
+        boardState.add(BoardState.encodeState(enPassant, castleRights, tile[end], lastCaptureOrPawnAdv));
+
+        //update hash for moved/captured pieces
+        hash ^= Zobrist.getKey(start, tile[start]);
+        if (tile[end] != 0) {
+            hash ^= Zobrist.getKey(end, tile[end]);
+        }
 
         if (flag == Move.NONE) {
             //if it's a capture or a pawn move, reset lastCaptureOrPawnAdv
@@ -288,42 +296,48 @@ public class Board {
             piecePositions.get(Piece.getColor(tile[end])).remove(Integer.valueOf(start));
             piecePositions.get(Piece.getColor(tile[end])).add(end);
 
-            updateGameState(move.end());
+            updateGameState(move.start(), move.end());
 
             //if pawn moved up 2 squares, make en passant possible for next move
             if (isPawn(end) && Math.abs(start - end) == 16) {
                 enPassant = end;
+                hash ^= Zobrist.ENPASSANT[enPassant];
             }
-
             return;
         }
 
         if (flag == Move.CASTLE) {
-            //move the rook
-            if (start - end < 0) {
-                tile[start + 1] = tile[start + 3];
-                tile[start + 3] = 0;
-                piecePositions.get(Piece.getColor(tile[start + 1])).remove(Integer.valueOf(start + 3));
-                piecePositions.get(Piece.getColor(tile[start + 1])).add(start + 1);
-            } else {
-                tile[start - 1] = tile[start - 4];
-                tile[start - 4] = 0;
-                piecePositions.get(Piece.getColor(tile[start - 1])).remove(Integer.valueOf(start - 4));
-                piecePositions.get(Piece.getColor(tile[start - 1])).add(start - 1);
-            }
-
             //move the king
             tile[end] = tile[start];
             tile[start] = 0;
             piecePositions.get(Piece.getColor(tile[end])).remove(Integer.valueOf(start));
             piecePositions.get(Piece.getColor(tile[end])).add(end);
 
-            updateGameState(move.end());
+            //move the rook
+            if (start - end < 0) {
+                hash ^= Zobrist.getKey(start + 3, tile[start + 3]);
+                tile[start + 1] = tile[start + 3];
+                tile[start + 3] = 0;
+                piecePositions.get(Piece.getColor(tile[start + 1])).remove(Integer.valueOf(start + 3));
+                piecePositions.get(Piece.getColor(tile[start + 1])).add(start + 1);
+                hash ^= Zobrist.getKey(start + 1, tile[start + 1]);
+
+            } else {
+                hash ^= Zobrist.getKey(start - 4, tile[start - 4]);
+                tile[start - 1] = tile[start - 4];
+                tile[start - 4] = 0;
+                piecePositions.get(Piece.getColor(tile[start - 1])).remove(Integer.valueOf(start - 4));
+                piecePositions.get(Piece.getColor(tile[start - 1])).add(start - 1);
+                hash ^= Zobrist.getKey(start - 1, tile[start - 1]);
+            }
+
+            updateGameState(move.start(), move.end());
             return;
         }
 
         if (flag == Move.ENPASSANT) {
             //capture enemy pawn
+            hash ^= Zobrist.getKey(enPassant, tile[enPassant]);
             removePieceFromRemainingPieces(tile[enPassant]);
             piecePositions.get(Piece.getColor(tile[enPassant])).remove(Integer.valueOf(enPassant));
             tile[enPassant] = 0;
@@ -335,7 +349,8 @@ public class Board {
             piecePositions.get(Piece.getColor(tile[end])).remove(Integer.valueOf(start));
             piecePositions.get(Piece.getColor(tile[end])).add(end);
 
-            updateGameState(move.end());
+            lastCaptureOrPawnAdv = currentMove;
+            updateGameState(move.start(), move.end());
             return;
         }
 
@@ -356,7 +371,8 @@ public class Board {
             piecePositions.get(Piece.getColor(tile[end])).remove(Integer.valueOf(start));
             tile[start] = 0;
 
-            updateGameState(move.end());
+            lastCaptureOrPawnAdv = currentMove;
+            updateGameState(move.start(), move.end());
         }
     }
 
@@ -364,63 +380,180 @@ public class Board {
      * Updates variables that keeps track of game state, namely colorToMove, positionHistory, currentMove,
      * enPassant.
      */
-    private void updateGameState(int end) {
+    private void updateGameState(int start, int end) {
+        hash ^= Zobrist.CASTLEKEYS[castleRights];
+        hash ^= Zobrist.getKey(end, tile[end]);
+
         //handle castling rights
-        if (getPieceColor(end) == Piece.WHITE) {
-            if ((castleKingSideW || castleQueenSideW) && isKing(end)) {
-                castleKingSideW = false;
-                castleQueenSideW = false;
+        if (getPieceColor(end) == Piece.WHITE && (castleRights & 0b0011) > 0) {
+            if (isKing(end)) {
+                castleRights &= 0b1100;
             }
 
-            if (castleKingSideW) {
-                if (isRook(end) && end == 63) {
-                    castleKingSideW = false;
-                }
+            if (isRook(end) && start == 63) {
+                castleRights &= 0b1110;
             }
 
-            if (castleQueenSideW) {
-                if (isRook(end) && end == 56) {
-                    castleQueenSideW = false;
-                }
-            }
-        } else {
-            if ((castleKingSideB || castleQueenSideB) && isKing(end)) {
-                castleKingSideB = false;
-                castleQueenSideB = false;
-            }
-
-            if (castleKingSideB) {
-                if (isRook(end) && end == 7) {
-                    castleKingSideB = false;
-                }
-            }
-
-            if (castleQueenSideB) {
-                if (isRook(end) && end == 0) {
-                    castleQueenSideB = false;
-                }
+            if (isRook(end) && start == 56) {
+                castleRights &= 0b1101;
             }
         }
+        if (getPieceColor(end) == Piece.BLACK && (castleRights & 0b1100) > 0) {
+            if (isKing(end)) {
+                castleRights &= 0b0011;
+            }
+
+            if (isRook(end) && start == 7) {
+                castleRights &= 0b1011;
+            }
+
+            if (isRook(end) && start == 0) {
+                castleRights &= 0b0111;
+            }
+        }
+        hash ^= Zobrist.CASTLEKEYS[castleRights];
 
         //if en passant was possible this move, make sure it's not possible next move
-        if (enPassant >= 0) {
-            enPassant = -1;
+        if (enPassant > 0) {
+            hash ^= Zobrist.ENPASSANT[enPassant];
+            enPassant = 0;
         }
 
-        //only add pieces position and color to move to history
-        String[] splitFen = positionToFen().split(" ");
-        String fenHistory = splitFen[0] + " " + splitFen[1];
-        if (positionHistory.containsKey(fenHistory)) {
-            int nr = positionHistory.get(fenHistory);
-            nr++;
-            positionHistory.put(fenHistory, nr);
-        } else {
-            positionHistory.put(fenHistory, 0);
-        }
-
-        currentMove++;
-        checkGameOver();
+        hash ^= Zobrist.getColorKey(colorToMove);
         colorToMove = (colorToMove == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        hash ^= Zobrist.getColorKey(colorToMove);
+        addToPositionHistory(hash);
+        checkGameOver();
+    }
+
+    /**
+     * Unmakes a move on the board by moving the pieces back and restoring past game state variables.
+     *
+     * @param move move to be unmade.
+     */
+    public void unmakeMove(Move move) {
+        int flag = move.flag();
+        int start = move.start();
+        int end = move.end();
+
+        //get board state to be restored and delete it from the list
+        int state = boardState.get(boardState.size() - 1);
+        boardState.remove(boardState.size() - 1);
+        removeFromPositionHistory(hash);
+
+        hash ^= Zobrist.getKey(end, tile[end]);
+        if (BoardState.getTile(state) != 0) {
+            hash ^= Zobrist.getKey(end, BoardState.getTile(state));
+        }
+
+        if (flag == Move.NONE) {
+            //put piece back where it was
+            tile[start] = tile[end];
+            tile[end] = BoardState.getTile(state);
+
+            //ensure piecePositions is correct
+            piecePositions.get(Piece.getColor(tile[start])).remove(Integer.valueOf(end));
+            piecePositions.get(Piece.getColor(tile[start])).add(start);
+            if (tile[end] != 0) {
+                piecePositions.get(Piece.getColor(tile[end])).add(end);
+                addToRemainingPiece(tile[end]);
+            }
+
+            revertGameStats(start, end, state);
+            return;
+        }
+
+        if (flag == Move.CASTLE) {
+            //put king back
+            tile[start] = tile[end];
+            tile[end] = 0;
+            piecePositions.get(Piece.getColor(tile[start])).remove(Integer.valueOf(end));
+            piecePositions.get(Piece.getColor(tile[start])).add(start);
+
+            //put rook back
+            if (start - end < 0) {
+                hash ^= Zobrist.getKey(start + 1, tile[start + 1]);
+                tile[start + 3] = tile[start + 1];
+                tile[start + 1] = 0;
+                piecePositions.get(Piece.getColor(tile[start + 3])).remove(Integer.valueOf(start + 1));
+                piecePositions.get(Piece.getColor(tile[start + 3])).add(start + 3);
+                hash ^= Zobrist.getKey(start + 3, tile[start + 3]);
+            } else {
+                hash ^= Zobrist.getKey(start - 1, tile[start - 1]);
+                tile[start - 4] = tile[start - 1];
+                tile[start - 1] = 0;
+                piecePositions.get(Piece.getColor(tile[start - 4])).remove(Integer.valueOf(start - 1));
+                piecePositions.get(Piece.getColor(tile[start - 4])).add(start - 4);
+                hash ^= Zobrist.getKey(start - 4, tile[start - 4]);
+            }
+
+            revertGameStats(start, end, state);
+            return;
+        }
+
+        if (flag == Move.ENPASSANT) {
+            //put enemy pawn back
+            int pastEnPassant = BoardState.getEnPassant(state);
+            tile[pastEnPassant] = (colorToMove == Piece.WHITE) ? Piece.createPiece(Piece.PAWN, Piece.WHITE)
+                    : Piece.createPiece(Piece.PAWN, Piece.BLACK);
+            addToRemainingPiece(tile[pastEnPassant]);
+            piecePositions.get(Piece.getColor(tile[pastEnPassant])).add(pastEnPassant);
+
+            tile[start] = tile[end];
+            tile[end] = 0;
+            piecePositions.get(Piece.getColor(tile[start])).remove(Integer.valueOf(end));
+            piecePositions.get(Piece.getColor(tile[start])).add(start);
+            hash ^= Zobrist.getKey(pastEnPassant, tile[pastEnPassant]);
+
+            revertGameStats(start, end, state);
+            return;
+        }
+
+        if (flag == Move.PROMOTION) {
+            int color = Piece.getColor(tile[end]);
+
+            //remove promoted piece
+            removePieceFromRemainingPieces(tile[end]);
+            piecePositions.get(Piece.getColor(tile[end])).remove(Integer.valueOf(end));
+            tile[end] = BoardState.getTile(state);
+
+            //if a piece was captured before promoting, bring it back
+            if (tile[end] != 0) {
+                addToRemainingPiece(tile[end]);
+                piecePositions.get(Piece.getColor(tile[end])).add(end);
+            }
+
+            //put pawn back
+            tile[start] = Piece.createPiece(Piece.PAWN, color);
+            addToRemainingPiece(tile[start]);
+            piecePositions.get(color).add(start);
+
+            revertGameStats(start, end, state);
+        }
+    }
+
+    /**
+     * Reverts variables that keep track of the game state to the last move state
+     */
+    private void revertGameStats(int start, int end, int state) {
+        hash ^= Zobrist.CASTLEKEYS[castleRights];
+        hash ^= Zobrist.getColorKey(colorToMove);
+
+        currentMove--;
+        lastCaptureOrPawnAdv = BoardState.getLastCaptOrPawnAdv(state);
+
+        enPassant = BoardState.getEnPassant(state);
+        castleRights = BoardState.getCastleRights(state);
+        colorToMove = (colorToMove == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+
+        //update hash
+        hash ^= Zobrist.getKey(start, tile[start]);
+        hash ^= Zobrist.CASTLEKEYS[castleRights];
+        hash ^= Zobrist.getColorKey(colorToMove);
+        if (enPassant != 0) {
+            hash ^= Zobrist.ENPASSANT[enPassant];
+        }
+        gameOver = false;
     }
 
     /**
@@ -440,6 +573,22 @@ public class Board {
     }
 
     /**
+     * Removes hash from hashmap used to keep track of past positions.
+     *
+     * @param hash hash you want to remove.
+     */
+    private void removeFromPositionHistory(long hash) {
+        //remove piece if it's the last one
+        if (positionHistory.get(hash) == 1) {
+            positionHistory.remove(hash);
+        } else {
+            int nr = positionHistory.get(hash);
+            nr--;
+            positionHistory.replace(hash, nr);
+        }
+    }
+
+    /**
      * Adds piece to list that board uses to keep track of remaining pieces.
      *
      * @param piece piece you want to add.
@@ -451,6 +600,21 @@ public class Board {
             remainingPieces.replace(piece, nr);
         } catch (NullPointerException e) {
             remainingPieces.put(piece, 1);
+        }
+    }
+
+    /**
+     * Adds Zobrist hash representing the current position to the hashmap that keeps track of past positions.
+     *
+     * @param hash Zobrist hash representing current position.
+     */
+    private void addToPositionHistory(long hash) {
+        try {
+            int nr = positionHistory.get(hash);
+            nr++;
+            positionHistory.replace(hash, nr);
+        } catch (NullPointerException e) {
+            positionHistory.put(hash, 1);
         }
     }
 
@@ -501,22 +665,44 @@ public class Board {
     }
 
     /**
+     * Makes the current position into a unique, or at least close to unique, hash.
+     */
+    public void hashPosition() {
+        hash = 0;
+
+        for (int index = 0; index < 64; index++) {
+            if (tile[index] == 0) {
+                continue;
+            }
+
+            hash ^= Zobrist.getKey(index, tile[index]);
+        }
+
+
+        hash ^= Zobrist.getColorKey(colorToMove);
+        hash ^= Zobrist.CASTLEKEYS[castleRights];
+        if (enPassant != 0) {
+            hash ^= Zobrist.ENPASSANT[enPassant];
+        }
+    }
+
+    /**
      * Translates the current position to a fen string.
      *
      * @return a fen string of the current position.
      */
     public String positionToFen() {
         StringBuilder fen = new StringBuilder();
-        StringBuilder castleRightsWhite = new StringBuilder();
-        StringBuilder castleRightsBlack = new StringBuilder();
-        String castleRights;
+        String castleRightsWhite = "";
+        String castleRightsBlack = "";
         String enPassant = "-";
         int emptyRowCont = 0;
+
         for (int index = 0; index < 64; index++) {
             //count empty tiles
             if (tile[index] == 0) {
                 emptyRowCont++;
-                if ((index + 1) % 8 == 0) {
+                if ((index + 1) % 8 == 0 && index / 8 != 7) {
                     fen.append(emptyRowCont).append("/");
                     emptyRowCont = 0;
                 }
@@ -533,17 +719,8 @@ public class Board {
             //represent piece as white or black and add to fen
             fen.append(Piece.makeString(tile[index]));
 
-            //add castling rights
-            if (isKing(index)) {
-                if (getPieceColor(index) == Piece.WHITE) {
-                    castleRightsWhite.append(MoveGenerator.getCastleRights(index, this).toUpperCase());
-                } else {
-                    castleRightsBlack.append(MoveGenerator.getCastleRights(index, this));
-                }
-            }
-
             //add enPassant
-            if (isPawn(index) && this.enPassant == index) {
+            if (isPawn(index) && this.enPassant == index && index > 0) {
                 if (getPieceColor(index) == Piece.WHITE) {
                     enPassant = Utils.getChessCoordinates(index + 8);
                 } else {
@@ -552,21 +729,30 @@ public class Board {
             }
 
             //add the slash at the end of row
-            if ((index + 1) % 8 == 0) {
+            if ((index + 1) % 8 == 0 && index / 8 != 7) {
                 fen.append("/");
             }
         }
 
         //constructing castleRights
-        if (castleRightsWhite.length() == 0 && castleRightsBlack.length() == 0) {
-            castleRights = "-";
-        } else {
-            castleRights = castleRightsWhite + castleRightsBlack.toString();
+        if (canCastleKingSide(Piece.WHITE)) {
+            castleRightsWhite += "K";
+        }
+        if (canCastleQueenSide(Piece.WHITE)) {
+            castleRightsWhite += "Q";
+        }
+        if (canCastleKingSide(Piece.BLACK)) {
+            castleRightsBlack += "k";
+        }
+        if (canCastleQueenSide(Piece.BLACK)) {
+            castleRightsBlack += "q";
         }
 
+        String castleRights = (castleRightsWhite.equals("") && castleRightsBlack.equals("")) ?
+                "-" : castleRightsWhite + castleRightsBlack;
         String colorToMoveString = (colorToMove == Piece.WHITE) ? "w" : "b";
-        fen.append(" ").append(colorToMoveString).append(" ").append(castleRights).append(" ").append(enPassant).
-                append(" ").append(currentMove - lastCaptureOrPawnAdv).append(" ").append(currentMove / 2);
+        fen.append(" ").append(colorToMoveString).append(" ").append(castleRights).append(" ").append(enPassant)
+                .append(" ").append(currentMove - lastCaptureOrPawnAdv).append(" ").append(currentMove / 2);
         return fen.toString();
     }
 
@@ -589,13 +775,13 @@ public class Board {
             if (fenSplit[5].equals("1")) {
                 currentMove = 2;
             } else {
-                currentMove = (Integer.parseInt(fenSplit[5]) * 2) - 1;
+                currentMove = (Integer.parseInt(fenSplit[5]) * 2);
             }
         } else {
-            currentMove = (Integer.parseInt(fenSplit[5]) * 2);
+            currentMove = (Integer.parseInt(fenSplit[5]) * 2) + 1;
         }
 
-        setLastCaptureOrPawnAdv(currentMove - Integer.parseInt(fenSplit[4]));
+        lastCaptureOrPawnAdv = currentMove - Integer.parseInt(fenSplit[4]);
         int color;
         int index = 0;
         //place pieces on the board
@@ -645,20 +831,19 @@ public class Board {
         //set up castling rights
         for (char castle : castleRights) {
             if (castle == 'K') {
-                castleKingSideW = true;
+                this.castleRights += 1;
                 continue;
             }
             if (castle == 'Q') {
-
-                castleQueenSideW = true;
+                this.castleRights += 2;
                 continue;
             }
             if (castle == 'k') {
-                castleKingSideB = true;
+                this.castleRights += 4;
                 continue;
             }
             if (castle == 'q') {
-                castleQueenSideB = true;
+                this.castleRights += 8;
             }
         }
 
@@ -666,7 +851,7 @@ public class Board {
         if (!fenSplit[3].equals("-")) {
             int enPassantCoordinates = Utils.getIndexFromChessCoordinates(fenSplit[3]);
             //if it's on y = 2 that means we are dealing with black
-            if (enPassantCoordinates / 8 == 1) {
+            if (colorToMove == Piece.WHITE) {
                 enPassant = enPassantCoordinates + 8;
             } else {
                 enPassant = enPassantCoordinates - 8;
@@ -680,7 +865,7 @@ public class Board {
         board.append(" +---+---+---+---+---+---+---+---+\n");
 
         for (int rank = 0; rank < 8; rank++) {
-            board.append(rank + 1).append("| ");
+            board.append(Math.abs(rank - 8)).append("| ");
             for (int file = 0; file < 8; file++) {
                 int index = rank * 8 + file;
                 int piece = tile[index];
@@ -690,7 +875,7 @@ public class Board {
                     board.append(Piece.makeString(piece)).append(" | ");
                 }
             }
-            board.append(rank + 1).append("\n");
+            board.append(Math.abs(rank - 8)).append("\n");
             if (rank > 0) {
                 board.append(" |---+---+---+---+---+---+---+---|\n");
             } else {
@@ -770,7 +955,7 @@ public class Board {
         this.lastCaptureOrPawnAdv = lastCaptureOrPawnAdv;
     }
 
-    public void setPositionHistory(HashMap<String, Integer> positionHistory) {
+    public void setPositionHistory(HashMap<Long, Integer> positionHistory) {
         this.positionHistory = positionHistory;
     }
 
@@ -800,15 +985,16 @@ public class Board {
 
     public boolean canCastleQueenSide(int color) {
         if (color == Piece.WHITE) {
-            return castleQueenSideW;
+            return (castleRights & 0b0010) == 0b0010;
         }
-        return castleQueenSideB;
+
+        return (castleRights & 0b1000) == 0b1000;
     }
 
     public boolean canCastleKingSide(int color) {
         if (color == Piece.WHITE) {
-            return castleKingSideW;
+            return (castleRights & 0b0001) == 0b0001;
         }
-        return castleKingSideB;
+        return (castleRights & 0b0100) == 0b0100;
     }
 }

@@ -93,7 +93,7 @@ public class GamePanel extends JPanel implements MouseListener {
     }
 
     public String goPerft(int depth) {
-        return counter.goPerft(board.deepCopy(), depth);
+        return counter.goPerft(board, depth);
     }
 
     public String getFen() {
@@ -348,39 +348,25 @@ public class GamePanel extends JPanel implements MouseListener {
 
             if (index / 8 == 0 || index / 8 == 7) {
                 promotionMove.setPromotion(Piece.QUEEN);
-                makeMove(promotionMove);
-                promotionTiles.clear();
-                resetColors();
-                addPiecesToBoard();
-                return;
             }
 
             if (index / 8 == 1 || index / 8 == 6) {
                 promotionMove.setPromotion(Piece.ROOK);
-                makeMove(promotionMove);
-                promotionTiles.clear();
-                resetColors();
-                addPiecesToBoard();
-                return;
             }
 
             if (index / 8 == 2 || index / 8 == 5) {
                 promotionMove.setPromotion(Piece.BISHOP);
-                makeMove(promotionMove);
-                promotionTiles.clear();
-                resetColors();
-                addPiecesToBoard();
-                return;
             }
 
             if (index / 8 == 3 || index / 8 == 4) {
                 promotionMove.setPromotion(Piece.KNIGHT);
-                makeMove(promotionMove);
-                promotionTiles.clear();
-                resetColors();
-                addPiecesToBoard();
-                return;
             }
+
+            makeMove(promotionMove);
+            promotionTiles.clear();
+            resetColors();
+            addPiecesToBoard();
+            return;
         }
 
         //if this is the first time we click on a piece

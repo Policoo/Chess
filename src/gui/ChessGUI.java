@@ -6,6 +6,7 @@ import engines.Random;
 import game.Piece;
 import utils.MoveGenerator;
 import utils.StockFish;
+import utils.Zobrist;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -37,6 +38,7 @@ public class ChessGUI extends JFrame implements ActionListener {
 
     public ChessGUI() {
         MoveGenerator.initialize();
+        Zobrist.initialize();
 
         setTitle("Chess");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
