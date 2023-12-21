@@ -158,7 +158,7 @@ public class MoveGenerator {
         }
 
         List<Move> moves = new ArrayList<>();
-        int color = board.getColorToMove();
+        int color = board.getTurn();
         int otherColor = (color == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
         List<Integer> piecePositions = board.getPiecePositions(color);
         List<List<Integer>> pinLines = getPins(board, otherColor);
@@ -210,7 +210,7 @@ public class MoveGenerator {
     }
 
     public static boolean legalMovesExist(Board board, List<List<Integer>> attackedSquares) {
-        int color = board.getColorToMove();
+        int color = board.getTurn();
         int otherColor = (color == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
         List<Integer> piecePositions = board.getPiecePositions(color);
         List<List<Integer>> pinLines = getPins(board, otherColor);
@@ -656,7 +656,7 @@ public class MoveGenerator {
      * that has the king in check, or (indexCheck1 + 1) * 100 + indexCheck2 if it's a double check and the king has to move.
      */
     private static int getCheckLineIndex(Board board, List<List<Integer>> attackedSquares) {
-        int kingIndex = board.getKingIndex(board.getColorToMove());
+        int kingIndex = board.getKingIndex(board.getTurn());
         int check = -1;
         for (int index = 0; index < attackedSquares.size(); index++) {
             //if the king is not in this line of sight, continue, because he can't be in check

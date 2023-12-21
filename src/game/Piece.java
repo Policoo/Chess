@@ -10,24 +10,24 @@ public class Piece {
     public static final int KING = 6;
 
     // Constants for piece colors
-    public static final int WHITE = 0;
-    public static final int BLACK = 8;
+    public static final int WHITE = 8;
+    public static final int BLACK = 16;
 
-    public static int createPiece(int type, int color) {
+    public static int create(int type, int color) {
         return type | color;
     }
 
-    public static int getType(int piece) {
+    public static int type(int piece) {
         return piece & 7;
     }
 
-    public static int getColor(int piece) {
-        return piece & 8;
+    public static int color(int piece) {
+        return piece & 24;
     }
 
-    public static String makeString(int piece) {
-        int color = getColor(piece);
-        int type = getType(piece);
+    public static String string(int piece) {
+        int color = color(piece);
+        int type = type(piece);
 
         String pieceStr = "";
 

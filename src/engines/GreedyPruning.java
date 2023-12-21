@@ -33,7 +33,7 @@ public class GreedyPruning implements Engine{
         for (Move move : moves) {
             Board boardCopy = board.deepCopy();
                 boardCopy.makeMove(move);
-                boolean maximizingPlayer = boardCopy.getColorToMove() == Piece.WHITE;
+                boolean maximizingPlayer = boardCopy.getTurn() == Piece.WHITE;
                 int[] moveEval = miniMaxPruning(boardCopy, this.depth, maximizingPlayer, Integer.MIN_VALUE, Integer.MAX_VALUE);
                 count += moveEval[1];
                 boardCopy = board.deepCopy();

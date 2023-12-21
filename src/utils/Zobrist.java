@@ -8,8 +8,8 @@ public class Zobrist {
     private static long[][] KEYS;
     private static long[] COLOR;
 
-    public static long[] CASTLEKEYS;
-    public static long[] ENPASSANT;
+    public static long[] CASTLE_KEYS;
+    public static long[] EN_PASSANT;
 
     /**
      * Initializes the Zobrist keys
@@ -24,9 +24,9 @@ public class Zobrist {
             }
         }
 
-        CASTLEKEYS = new long[16];
+        CASTLE_KEYS = new long[16];
         for (int right = 0; right < 16; right++) {
-            CASTLEKEYS[right] = random.nextLong();
+            CASTLE_KEYS[right] = random.nextLong();
         }
 
         COLOR = new long[2];
@@ -34,22 +34,22 @@ public class Zobrist {
             COLOR[color] = random.nextLong();
         }
 
-        ENPASSANT = new long[64];
+        EN_PASSANT = new long[64];
         for (int index = 0; index < 4; index++) {
-            ENPASSANT[index] = random.nextLong();
+            EN_PASSANT[index] = random.nextLong();
         }
     }
 
     public static long getKey(int index, int piece) {
-        piece = (piece > 6) ? piece - 3 : piece - 1;
+        piece = (piece > 14) ? piece  - 13 : piece - 9;
         return KEYS[index][piece];
     }
 
     public static long getColorKey(int color) {
-        if (color == Piece.BLACK) {
-            return COLOR[1];
+        if (color == Piece.WHITE) {
+            return COLOR[0];
         }
 
-        return COLOR[color];
+        return COLOR[1];
     }
 }

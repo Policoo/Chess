@@ -39,7 +39,7 @@ public class Greedy implements Engine {
         for (Move move : moves) {
             Board boardCopy = board.deepCopy();
             boardCopy.makeMove(move);
-            boolean maximizingPlayer = boardCopy.getColorToMove() == Piece.WHITE;
+            boolean maximizingPlayer = boardCopy.getTurn() == Piece.WHITE;
             int[] moveEval = miniMax(boardCopy, this.depth, maximizingPlayer);
             count += moveEval[1];
             boardCopy = board.deepCopy();

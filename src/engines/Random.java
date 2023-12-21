@@ -4,7 +4,6 @@ import game.Board;
 import game.Move;
 import utils.MoveGenerator;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class Random implements Engine{

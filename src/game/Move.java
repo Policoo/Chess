@@ -57,7 +57,7 @@ public class Move {
     public String toString() {
         String promotion = "";
         if (((move & FLAG_MASK) >> 12) == 3) {
-            promotion = Piece.makeString(getPromotion()).toLowerCase();
+            promotion = Piece.string(getPromotion()).toLowerCase();
         }
         return Utils.getChessCoordinates(start()) + Utils.getChessCoordinates(end()) + promotion;
     }
