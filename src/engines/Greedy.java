@@ -77,7 +77,7 @@ public class Greedy implements Engine {
         int blackEval = 0;
 
         for (int index = 0; index < 64; index++) {
-            if (board.isEmptyTile(index) || board.isKing(index)) {
+            if (board.isEmpty(index) || board.isKing(index)) {
                 continue;
             }
             int value = pieceValues.get(board.getPieceType(index));
@@ -99,6 +99,11 @@ public class Greedy implements Engine {
         this.pieceValues.put(Piece.KNIGHT, 300);
         this.pieceValues.put(Piece.ROOK, 500);
         this.pieceValues.put(Piece.QUEEN, 900);
+    }
+
+    @Override
+    public String toString() {
+        return "Greedy";
     }
 
     @Override

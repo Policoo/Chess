@@ -79,7 +79,7 @@ public class GreedyPruning implements Engine{
         int blackEval = 0;
 
         for (int index = 0; index < 64; index++) {
-            if (board.isEmptyTile(index) || board.isKing(index)) {
+            if (board.isEmpty(index) || board.isKing(index)) {
                 continue;
             }
             int value = pieceValues.get(board.getPieceType(index));

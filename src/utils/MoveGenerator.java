@@ -153,7 +153,7 @@ public class MoveGenerator {
     }
 
     public static List<Move> generateMoves(Board board) {
-        if (board.getGameOver()) {
+        if (board.isGameOver()) {
             return new ArrayList<>();
         }
 
@@ -268,7 +268,7 @@ public class MoveGenerator {
         int direction = (color == Piece.WHITE) ? -8 : 8;
 
         //if space in direction is free and move is legal, add move
-        if (edgeOfBoard.get(direction)[index] > 0 && board.isEmptyTile(index + direction) && isLegalMove(board, index, index + direction, pinLines, attackedSquares, check)) {
+        if (edgeOfBoard.get(direction)[index] > 0 && board.isEmpty(index + direction) && isLegalMove(board, index, index + direction, pinLines, attackedSquares, check)) {
 
             //if a pawn can only move once before hitting the edge, he is going to promote
             if (edgeOfBoard.get(direction)[index] == 1) {
@@ -282,7 +282,7 @@ public class MoveGenerator {
         }
 
         //if pawn can go forward 6 times it has not moved yet, check if moving 2 tiles is possible and if the tile in front of you is empty
-        if (edgeOfBoard.get(direction)[index] == 6 && board.isEmptyTile(index + direction) && board.isEmptyTile(index + (direction * 2)) && isLegalMove(board, index, index + (direction * 2), pinLines, attackedSquares, check)) {
+        if (edgeOfBoard.get(direction)[index] == 6 && board.isEmpty(index + direction) && board.isEmpty(index + (direction * 2)) && isLegalMove(board, index, index + (direction * 2), pinLines, attackedSquares, check)) {
             moves.add(new Move(index, index + (direction * 2), 0, 0));
         }
 
@@ -294,7 +294,7 @@ public class MoveGenerator {
             }
 
             //check for regular capture
-            if (!board.isEmptyTile(index + side) && !board.isColor(index + side, color) && isLegalMove(board, index, index + side, pinLines, attackedSquares, check)) {
+            if (!board.isEmpty(index + side) && !board.isColor(index + side, color) && isLegalMove(board, index, index + side, pinLines, attackedSquares, check)) {
                 //if a pawn can only move once before hitting the edge, he is going to promote
                 if (edgeOfBoard.get(direction)[index] == 1) {
                     moves.add(new Move(index, index + side, 3, Piece.QUEEN));
@@ -312,7 +312,7 @@ public class MoveGenerator {
                 continue;
             }
 
-            if (!board.isEmptyTile(index + sideways) && board.getEnPassant() == index + sideways && !board.isColor(index + sideways, color) && isLegalMove(board, index, index + side, pinLines, attackedSquares, check)) {
+            if (!board.isEmpty(index + sideways) && board.getEnPassant() == index + sideways && !board.isColor(index + sideways, color) && isLegalMove(board, index, index + side, pinLines, attackedSquares, check)) {
                 moves.add(new Move(index, index + side, 2, 0));
             }
         }
@@ -352,9 +352,9 @@ public class MoveGenerator {
         }
 
         //if the tiles between king and rook are empty
-        if (board.isEmptyTile(index + 1) && board.isEmptyTile(index + 2) && board.canCastleKingSide(color)) {
+        if (board.isEmpty(index + 1) && board.isEmpty(index + 2) && board.canCastleKingSide(color)) {
             //if there is a piece at the end, and it is your rook, which hasn't moved
-            if (!board.isEmptyTile(index + 3) && board.isRook(index + 3) && board.isColor(index + 3, color)) {
+            if (!board.isEmpty(index + 3) && board.isRook(index + 3) && board.isColor(index + 3, color)) {
                 //if move is legal
                 if (isLegalMove(board, index, index + 1, pinLines, attackedSquares, check) && isLegalMove(board, index, index + 2, pinLines, attackedSquares, check)) {
                     castleMove.add(new Move(index, index + 2, 1, 0));
@@ -363,9 +363,9 @@ public class MoveGenerator {
         }
 
         //if the tiles between king and rook are empty
-        if (board.isEmptyTile(index - 1) && board.isEmptyTile(index - 2) && board.isEmptyTile(index - 3) && board.canCastleQueenSide(color)) {
+        if (board.isEmpty(index - 1) && board.isEmpty(index - 2) && board.isEmpty(index - 3) && board.canCastleQueenSide(color)) {
             //if there is a piece at the end, and it is your rook, which hasn't moved
-            if (!board.isEmptyTile(index - 4) && board.isRook(index - 4) && board.isColor(index - 4, color)) {
+            if (!board.isEmpty(index - 4) && board.isRook(index - 4) && board.isColor(index - 4, color)) {
                 //if move is legal
                 if (isLegalMove(board, index, index - 1, pinLines, attackedSquares, check) && isLegalMove(board, index, index - 2, pinLines, attackedSquares, check)) {
                     castleMove.add(new Move(index, index - 2, 1, 0));
@@ -426,7 +426,7 @@ public class MoveGenerator {
                     curIndex = curIndex + direction;
 
                     //add empty tiles to the line of sight, if we see a piece, stop
-                    if (board.isEmptyTile(curIndex)) {
+                    if (board.isEmpty(curIndex)) {
                         lineOfSight.add(curIndex);
 
                         //pawns and kings can only go in a direction once
@@ -511,7 +511,7 @@ public class MoveGenerator {
                 curIndex = curIndex + direction;
 
                 //if tile is empty, add it to the list
-                if (board.isEmptyTile(curIndex)) {
+                if (board.isEmpty(curIndex)) {
                     pinLine.add(curIndex);
                     continue;
                 }
@@ -684,7 +684,7 @@ public class MoveGenerator {
         for (int direction : directions) {
             int count = edgeOfBoard.get(direction)[index];
 
-            if (count > 0 && (board.isEmptyTile(index + direction) || !board.isColor(index + direction, color))) {
+            if (count > 0 && (board.isEmpty(index + direction) || !board.isColor(index + direction, color))) {
                 if (isLegalMove(board, index, index + direction, pinLines, attackedSquares, check)) {
                     moves.add(new Move(index, index + direction, 0, 0));
                 }
@@ -702,14 +702,14 @@ public class MoveGenerator {
             int count = edgeOfBoard.get(direction)[index];
             int curTile = index;
 
-            while (count > 0 && (board.isEmptyTile(curTile + direction) || !board.isColor(curTile + direction, color))) {
+            while (count > 0 && (board.isEmpty(curTile + direction) || !board.isColor(curTile + direction, color))) {
                 curTile += direction;
 
                 if (isLegalMove(board, index, curTile, pinLines, attackedSquares, check)) {
                     moves.add(new Move(index, curTile, 0, 0));
                 }
 
-                if (!board.isEmptyTile(curTile) && !board.isColor(curTile, color)) {
+                if (!board.isEmpty(curTile) && !board.isColor(curTile, color)) {
                     break;
                 }
                 count--;

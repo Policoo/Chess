@@ -1,0 +1,130 @@
+.std-button {
+    -fx-background-color: #6495ED;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+
+    -fx-padding: 4px 0 4px 0;
+
+    -fx-border-width: 2px;
+    -fx-border-color: black;
+    -fx-border-radius: 5px;
+
+    -fx-text-fill: black;
+    -fx-font-family: 'Arial', sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.std-button:hover {
+    -fx-background-color: #4169E1;
+}
+
+.std-button:pressed {
+    -fx-background-color: #1E90FF;
+}
+
+.flip {
+    -fx-padding: 2px;
+}
+
+.start-engine-match {
+    -fx-font-family: 'Arial', 'ui-sans-serif';
+    -fx-font-weight: bold;
+    -fx-padding: 2px;
+}
+
+.text-input {
+    -fx-background-color: #565656;
+    -fx-background-radius: 4px;
+
+    -fx-padding: 2px;
+
+    -fx-border-width: 2px;
+    -fx-border-color: #2d2d2d;
+    -fx-border-radius: 3px;
+
+    -fx-text-fill: white;
+}
+
+.text-input:focused {
+    -fx-border-color: #00A2E8;
+}
+
+.combo-box {
+    -fx-background-color: #565656;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+
+    -fx-border-width: 2px;
+    -fx-border-color: #2d2d2d;
+    -fx-border-radius: 5px;
+
+    -fx-text-fill: white;
+    -fx-padding: 0px;
+}
+
+.combo-box .list-view {
+    -fx-background-color: #4d4d4d;
+    -fx-border-width: 1px;
+    -fx-border-color: black;
+
+    -fx-text-fill: white;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: #4d4d4d;
+    -fx-background-insets: 0;
+    -fx-background-radius: 6px;
+    -fx-padding: 2px;
+
+    -fx-text-fill: white;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: #6495ED;
+    -fx-background-radius: 6px;
+    -fx-background-insets: 0;
+
+    -fx-border-radius: 5px;
+    -fx-border-width: 1px;
+    -fx-border-color: black;
+    -fx-border-style: solid;
+}
+
+.combo-box .arrow-button:hover {
+    -fx-background-color: #4169E1;
+}
+
+.combo-box .arrow-button:pressed {
+    -fx-background-color: #1E90FF;
+}
+
+.scroll-pane {
+    -fx-background-color: #3d3d3d;
+}
+
+.scroll-bar:vertical {
+    -fx-border-color: #3d3d3d;
+    -fx-background-color: #3d3d3d;
+    -fx-background-radius: 6px;
+
+    -fx-padding: 0;
+    -fx-width: 4px;
+    -fx-margin: 0;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #676767;
+    -fx-min-height: 10px;
+}
+
+/* Vertical ScrollBar Arrows (add-line and sub-line) */
+.scroll-bar:vertical .increment-button, .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 1px;
+}
+
+/* Vertical ScrollBar Track (add-page and sub-page) */
+.scroll-bar:vertical .track {
+    -fx-background-color: #3d3d3d;
+}
