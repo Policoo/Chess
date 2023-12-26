@@ -376,20 +376,6 @@ public class MoveGenerator {
         return castleMove;
     }
 
-    public static String getCastleRights(int index, Board board) {
-        String castleRights = "";
-        if (board.isKing(index)) {
-            if (board.canCastleKingSide(board.getPieceColor(index))) {
-                castleRights += "k";
-            }
-            if (board.canCastleQueenSide(board.getPieceColor(index))) {
-                castleRights += "q";
-            }
-            return castleRights;
-        }
-        return "";
-    }
-
     /**
      * Goes through the board to find pieces of the given color and calculates what
      * squares those pieces attack.

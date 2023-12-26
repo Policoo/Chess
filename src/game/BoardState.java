@@ -1,7 +1,7 @@
 package game;
 
 public class BoardState {
-    private static final int ENPASSANT_MASK = 0x3F;
+    private static final int EN_PASSANT_MASK = 0x3F;
     private static final int CASTLE_MASK = 0x3C0;
     private static final int TILE_MASK = 0x7C00;
 
@@ -10,7 +10,7 @@ public class BoardState {
     }
 
     public static int enPassant(int boardState) {
-        return boardState & ENPASSANT_MASK;
+        return boardState & EN_PASSANT_MASK;
     }
 
     public static int castleRights(int boardState) {

@@ -12,9 +12,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
 import utils.MoveGenerator;
 import utils.StockFish;
 import utils.Zobrist;
@@ -35,8 +33,8 @@ public class GamePane extends BorderPane {
     private Engine engine;
 
     private List<Move> legalMoves;
-    private List<Integer> pieceMoves;
-    private List<Integer> promotionTiles;
+    private final List<Integer> pieceMoves;
+    private final List<Integer> promotionTiles;
     private Move promotionMove;
     private int lastClick;
     private int perspective;
@@ -169,9 +167,6 @@ public class GamePane extends BorderPane {
 
             int pieceIndex = 0;
             switch (board.getPieceType(perIndex)) {
-                case Piece.KING:
-                    pieceIndex = 0;
-                    break;
                 case Piece.QUEEN:
                     pieceIndex = 1;
                     break;

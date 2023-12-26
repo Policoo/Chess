@@ -77,12 +77,4 @@ public class Piece {
 
         return pieceStr;
     }
-
-    public static String getColorString(int color) {
-        if (color == WHITE) {
-            return "white";
-        } else {
-            return "black";
-        }
-    }
 }

@@ -4,8 +4,6 @@ import engines.Engine;
 import engines.Greedy;
 import engines.Random;
 import javafx.beans.property.*;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -13,14 +11,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 public class OptionsPane extends VBox {
-    private Engine[] availableEngines;
+    private final Engine[] availableEngines;
 
     private TextField fenInput;
     private TextField depthInput;
@@ -116,12 +113,9 @@ public class OptionsPane extends VBox {
         confirmButton.setPrefSize(290, 17);
         confirmButton.getStyleClass().add("std-button");
         confirmButton.getStyleClass().add("flip");
-        confirmButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                fen.set(fenInput.getText());
-                fenInput.setText("");
-            }
+        confirmButton.setOnAction(actionEvent -> {
+            fen.set(fenInput.getText());
+            fenInput.setText("");
         });
 
         container.getChildren().add(confirmButton);
@@ -151,12 +145,9 @@ public class OptionsPane extends VBox {
         goPerftButton.setPrefSize(70, 25);
         goPerftButton.getStyleClass().add("std-button");
         goPerftButton.getStyleClass().add("flip");
-        goPerftButton.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                depth.set(depthInput.getText());
-                depthInput.setText("");
-            }
+        goPerftButton.setOnAction(actionEvent -> {
+            depth.set(depthInput.getText());
+            depthInput.setText("");
         });
 
         container.getChildren().add(goPerftButton);
@@ -177,12 +168,7 @@ public class OptionsPane extends VBox {
         opponentChoice.setPrefSize(120, 25);
         opponentChoice.getItems().add(null);
         opponentChoice.getItems().addAll(availableEngines);
-        opponentChoice.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                opponent.set(opponentChoice.getValue());
-            }
-        });
+        opponentChoice.setOnAction(actionEvent -> opponent.set(opponentChoice.getValue()));
 
         container.getChildren().add(opponentChoice);
 
@@ -235,12 +221,9 @@ public class OptionsPane extends VBox {
         Label startButton = new Label();
         startButton.getStyleClass().add("std-button");
         startButton.getStyleClass().add("start-engine-match");
-        startButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                engine1.set(engine1Choice.getValue());
-                engine2.set(engine2Choice.getValue());
-            }
+        startButton.setOnMouseClicked(mouseEvent -> {
+            engine1.set(engine1Choice.getValue());
+            engine2.set(engine2Choice.getValue());
         });
 
         Label startText = new Label("Start");

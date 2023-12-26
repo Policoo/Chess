@@ -4,7 +4,6 @@ import game.Board;
 import game.Move;
 import utils.MoveGenerator;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -41,7 +40,7 @@ public class Counter {
             board.undoMove(move);
             numPositions += movePositions;
             if (depth == this.depth) {
-                System.out.println(move.toString() + ": " + movePositions);
+                System.out.println(move + ": " + movePositions);
                 results.put(move.toString(), movePositions);
             }
         }

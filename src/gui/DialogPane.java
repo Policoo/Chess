@@ -9,7 +9,7 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 
 public class DialogPane extends VBox {
-    private VBox content;
+    private final VBox content;
 
     public DialogPane() {
         setPrefSize(300, 552);
