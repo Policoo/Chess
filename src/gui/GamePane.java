@@ -161,7 +161,7 @@ public class GamePane extends BorderPane {
             int perIndex = (perspective == Piece.WHITE) ? index : 63 - index;
 
             if (board.isEmpty(perIndex)) {
-                tile[perIndex].setGraphic(null);
+                tile[index].setGraphic(null);
                 continue;
             }
 

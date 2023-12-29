@@ -331,8 +331,7 @@ public class Board {
             if (start - end < 0) {
                 rookStart = start + 3;
                 rookEnd = start + 1;
-            }
-            else {
+            } else {
                 rookStart = start - 4;
                 rookEnd = start - 1;
             }
@@ -341,8 +340,8 @@ public class Board {
             hash ^= Zobrist.getKey(rookStart, tile[rookStart]);
             tile[rookEnd] = tile[rookStart];
             tile[rookStart] = 0;
-            piecePositions.get(Piece.color(rookEnd)).remove(rookStart);
-            piecePositions.get(Piece.color(rookEnd)).add(rookEnd);
+            piecePositions.get(Piece.color(tile[rookEnd])).remove(Integer.valueOf(rookStart));
+            piecePositions.get(Piece.color(tile[rookEnd])).add(rookEnd);
             hash ^= Zobrist.getKey(rookEnd, tile[rookEnd]);
 
             updateGameState(start, end);
@@ -477,8 +476,7 @@ public class Board {
             if (start - end < 0) {
                 rookStart = start + 3;
                 rookEnd = start + 1;
-            }
-            else {
+            } else {
                 rookStart = start - 4;
                 rookEnd = start - 1;
             }
@@ -487,9 +485,9 @@ public class Board {
             hash ^= Zobrist.getKey(rookEnd, tile[rookEnd]);
             tile[rookStart] = tile[rookEnd];
             tile[rookEnd] = 0;
-            piecePositions.get(Piece.color(rookStart)).remove(rookEnd);
-            piecePositions.get(Piece.color(rookStart)).add(rookStart);
-            hash ^= Zobrist.getKey(rookEnd, tile[rookEnd]);
+            piecePositions.get(Piece.color(tile[rookStart])).remove(Integer.valueOf(rookEnd));
+            piecePositions.get(Piece.color(tile[rookStart])).add(rookStart);
+            hash ^= Zobrist.getKey(rookStart, tile[rookStart]);
 
             revertGameStats(start, end, state);
             return;
@@ -533,6 +531,7 @@ public class Board {
         hash ^= Zobrist.CASTLE_KEYS[castleRights];
 
         //undo enPassant hash if needed
+        enPassant = BoardState.enPassant(state);
         if (enPassant > 0) {
             hash ^= Zobrist.EN_PASSANT[enPassant];
         }
@@ -777,6 +776,14 @@ public class Board {
 
         board.append("   a   b   c   d   e   f   g   h\n");
         return board.toString();
+    }
+
+    public void printComplete() {
+        System.out.println(this);
+        System.out.println(hash);
+        System.out.println(piecePositions);
+        System.out.println(positionHistory);
+        System.out.println(Integer.toBinaryString(castleRights));
     }
 
     // <--> FEN AND PRINTING <--> //
