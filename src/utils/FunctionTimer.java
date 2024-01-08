@@ -22,11 +22,9 @@ public class FunctionTimer {
         MoveGenerator.initialize();
 
         long startTime = System.nanoTime();
-//        for (int i = 0; i < 1000; i++) {
-//            List<List<Integer>> yes = new ArrayList<>();;
-//            List<List<Integer>> yesYes = new ArrayList<>();;
-//        }
-        counter.goPerft(board.positionToFen(), 5);
+
+        counter.goPerft(board.positionToFen(), 3);
+
         long endTime = System.nanoTime();
         long duration = endTime - startTime;
 

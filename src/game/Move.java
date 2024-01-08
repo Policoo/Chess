@@ -5,7 +5,7 @@ import utils.Utils;
 public class Move {
     public static final int NONE = 0;
     public static final int CASTLE = 1;
-    public static final int ENPASSANT = 2;
+    public static final int EN_PASSANT = 2;
     public static final int PROMOTION = 3;
     private static final int START_INDEX_MASK = 0x3F;
     private static final int END_INDEX_MASK = 0xFC0;

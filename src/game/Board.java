@@ -6,22 +6,24 @@ import utils.Zobrist;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 public class Board {
     private final int[] tile;
     private HashMap<Integer, List<Integer>> piecePositions;
+    private HashMap<Long, Integer> positionHistory;
+    private HashMap<Integer, Integer> remainingPieces;
+    private final HashMap<Integer, Integer> kingPositions;
+    private HashMap<Integer, List<List<Integer>>> attackedTiles;
+    private HashMap<Integer, List<List<Integer>>> pins;
 
     private int enPassant;
     private int castleRights;
-
     private int currentMove;
     private int lastCaptOrPawnAdv;
     private int turn;
-
-
-    private HashMap<Long, Integer> positionHistory;
-    private HashMap<Integer, Integer> remainingPieces;
+    private int check;
     private boolean gameOver;
     private long hash;
 
@@ -32,6 +34,8 @@ public class Board {
     public Board() {
         positionHistory = new HashMap<>();
         remainingPieces = new HashMap<>();
+        kingPositions = new HashMap<>();
+
         gameOver = false;
         currentMove = 2;
         lastCaptOrPawnAdv = 1;
@@ -41,13 +45,18 @@ public class Board {
         castleRights = 15;
         boardState = new ArrayList<>();
 
-        reset();
+        startPosition();
         hashPosition();
+        initializeAttackTiles();
+        initializePinLines();
+        getCheckLine();
     }
 
     public Board(String fenString) {
         positionHistory = new HashMap<>();
         remainingPieces = new HashMap<>();
+        kingPositions = new HashMap<>();
+
         gameOver = false;
         currentMove = 0;
         lastCaptOrPawnAdv = 0;
@@ -59,6 +68,9 @@ public class Board {
 
         makeBoardFromFen(fenString);
         hashPosition();
+        initializeAttackTiles();
+        initializePinLines();
+        getCheckLine();
     }
 
     /**
@@ -89,9 +101,9 @@ public class Board {
     }
 
     /**
-     * Resets the board to its initial state.
+     * Sets up the board in the start position.
      */
-    public void reset() {
+    public void startPosition() {
         piecePositions = new HashMap<>();
         piecePositions.put(Piece.BLACK, new ArrayList<>());
         piecePositions.put(Piece.WHITE, new ArrayList<>());
@@ -150,6 +162,9 @@ public class Board {
         remainingPieces.put(Piece.create(Piece.BISHOP, Piece.BLACK), 2);
         remainingPieces.put(Piece.create(Piece.KNIGHT, Piece.BLACK), 2);
         remainingPieces.put(Piece.create(Piece.PAWN, Piece.BLACK), 8);
+
+        kingPositions.put(Piece.BLACK, 4);
+        kingPositions.put(Piece.WHITE, 60);
     }
 
     /**
@@ -200,6 +215,7 @@ public class Board {
             switch (typeString) {
                 case "k":
                     type = Piece.KING;
+                    kingPositions.put(color, index);
                     break;
                 case "q":
                     type = Piece.QUEEN;
@@ -344,11 +360,12 @@ public class Board {
             piecePositions.get(Piece.color(tile[rookEnd])).add(rookEnd);
             hash ^= Zobrist.getKey(rookEnd, tile[rookEnd]);
 
+            updateAttackedTilesAndPins(rookStart, rookEnd);
             updateGameState(start, end);
             return;
         }
 
-        if (flag == Move.ENPASSANT) {
+        if (flag == Move.EN_PASSANT) {
             //capture enemy pawn
             hash ^= Zobrist.getKey(enPassant, tile[enPassant]);
             removePieceFromRemainingPieces(tile[enPassant]);
@@ -380,6 +397,8 @@ public class Board {
      * enPassant.
      */
     private void updateGameState(int start, int end) {
+        updateAttackedTilesAndPins(start, end);
+
         //update the hash with the moved piece
         hash ^= Zobrist.getKey(end, tile[end]);
 
@@ -428,6 +447,8 @@ public class Board {
         addToPositionHistory(hash);
         currentMove++;
         checkGameOver();
+        getCheckLine();
+        System.out.println(pins);
     }
 
     /**
@@ -489,11 +510,12 @@ public class Board {
             piecePositions.get(Piece.color(tile[rookStart])).add(rookStart);
             hash ^= Zobrist.getKey(rookStart, tile[rookStart]);
 
+            updateAttackedTilesAndPins(rookEnd, rookStart);
             revertGameStats(start, end, state);
             return;
         }
 
-        if (flag == Move.ENPASSANT) {
+        if (flag == Move.EN_PASSANT) {
             //put enemy pawn back
             int enPassant = BoardState.enPassant(state);
             tile[enPassant] = Piece.create(Piece.PAWN, turn);
@@ -522,6 +544,8 @@ public class Board {
      * Reverts variables that keep track of the game state to the last move state
      */
     private void revertGameStats(int start, int end, int state) {
+        updateAttackedTilesAndPins(end, start);
+
         //update hash with reverted piece
         hash ^= Zobrist.getKey(start, tile[start]);
 
@@ -545,18 +569,258 @@ public class Board {
 
         gameOver = false;
         currentMove--;
+        getCheckLine();
+    }
+
+    private void updateAttackedTilesAndPins(int oldIndex, int newIndex) {
+        for (int color : attackedTiles.keySet()) {
+            Iterator<List<Integer>> iterator = attackedTiles.get(color).iterator();
+            while (iterator.hasNext()) {
+                List<Integer> lineOfSight = iterator.next();
+
+                // if the line of sight belongs to the moved piece, remove it, since it needs to be recalculated
+                if (lineOfSight.get(0) == oldIndex) {
+                    iterator.remove();
+                    continue;
+                }
+
+                // if this piece could see the move, recalculate line of sight
+                if (lineOfSight.contains(oldIndex) || lineOfSight.contains(newIndex)) {
+                    updateLineOfSight(lineOfSight);
+                }
+            }
+        }
+
+        //calculate the attacked tiles for the moved piece
+        attackedTiles.get(turn).addAll(calculateAttackedTiles(newIndex));
+
+        //get rid of pins that are no longer pins
+        for (int color : pins.keySet()) {
+            // if the move affected the pin in any way, remove the pin, since we need to recalculate it
+            pins.get(color).removeIf(pinLine -> pinLine.contains(oldIndex) || pinLine.contains(newIndex));
+        }
+
+        //see if the moved piece is pinning anything
+        List<Integer> pinLine = calculatePinLine(newIndex);
+        if (!pinLine.isEmpty()) {
+            pins.get(turn).add(pinLine);
+        }
+
+        if (check == -1) {
+            return;
+        }
+
+        //if we get here, that means that the king was in check this move, so look if the check was blocked
+        if (isKing(newIndex)) {
+            return;
+        }
+
+        //if we get here, that means the check was blocked, so a piece is pinned
+        int otherColor = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        int pinningPieceIndex = attackedTiles.get(otherColor).get(check).get(0);
+        pinLine = calculatePinLine(pinningPieceIndex);
+        if (!pinLine.isEmpty()) {
+            pins.get(turn).add(pinLine);
+        }
     }
 
     // <--> MAKING MOVES <--> //
 
-    // <--> GAME OVER CONDITIONS <--> //
+    // <--> ATTACKED TILES AND PIN LINES <--> //
+
+    private void initializeAttackTiles() {
+        int[] colors = new int[]{Piece.WHITE, Piece.BLACK};
+        attackedTiles = new HashMap<>();
+
+        for (int color : colors) {
+            attackedTiles.put(color, new ArrayList<>(96));
+
+            for (int piecePosition : piecePositions.get(color)) {
+                List<List<Integer>> pieceLineOfSights = calculateAttackedTiles(piecePosition);
+
+                if (!pieceLineOfSights.isEmpty()) {
+                    attackedTiles.get(color).addAll(pieceLineOfSights);
+                }
+            }
+        }
+    }
+
+    private List<List<Integer>> calculateAttackedTiles(int index) {
+        List<List<Integer>> attackedTiles = new ArrayList<>(8);
+        int pieceType = (isPawn(index)) ? tile[index] : Piece.type(tile[index]);
+        int[] directions = MoveGenerator.getDirections(pieceType);
+
+        switch (Piece.type(tile[index])) {
+            case Piece.PAWN:
+                //first direction is forward, where pawn can't attack
+                for (int i = 1; i < 3; i++) {
+                    //if the pawn wouldn't go off the board, it can attack
+                    if (MoveGenerator.getEdgeOfBoard(index, directions[i]) > 0) {
+                        List<Integer> lineOfSight = new ArrayList<>(2);
+                        lineOfSight.add(index);
+                        lineOfSight.add(index + directions[i]);
+                        attackedTiles.add(lineOfSight);
+                    }
+                }
+                break;
+            case Piece.KING:
+            case Piece.KNIGHT:
+                //kings and knights can only see one square in a direction
+                for (int dir : directions) {
+                    if (MoveGenerator.getEdgeOfBoard(index, dir) > 0) {
+                        List<Integer> lineOfSight = new ArrayList<>(2);
+                        lineOfSight.add(index);
+                        lineOfSight.add(index + dir);
+                        attackedTiles.add(lineOfSight);
+                    }
+                }
+            default:
+                //sliding pieces would go in default
+                for (int dir: directions) {
+                if (MoveGenerator.getEdgeOfBoard(index, dir) < 1) {
+                    continue;
+                }
+
+                List<Integer> lineOfSight = new ArrayList<>(8);
+                lineOfSight.add(index);
+                int curIndex = index;
+                for (int step = MoveGenerator.getEdgeOfBoard(index, dir); step > 0; step--) {
+                    curIndex = curIndex + dir;
+                    lineOfSight.add(curIndex);
+
+                    //if we find a piece, we can't see past it, so break
+                    if (tile[curIndex] != 0) {
+                        break;
+                    }
+                }
+
+                attackedTiles.add(lineOfSight);
+            }
+
+        }
+
+        return attackedTiles;
+    }
+
+    private void updateLineOfSight(List<Integer> lineOfSight) {
+        int direction = lineOfSight.get(1) - lineOfSight.get(0);
+        int steps = MoveGenerator.getEdgeOfBoard(lineOfSight.get(0), direction);
+        if (isPawn(lineOfSight.get(0)) || isKing(lineOfSight.get(0)) || isKnight(lineOfSight.get(0))) {
+            steps = 1;
+        }
+
+        int index = lineOfSight.get(0);
+        lineOfSight.clear();
+        lineOfSight.add(index);
+        for (int step = 0; step < steps; step++) {
+            index += direction;
+            lineOfSight.add(index);
+
+            if (!isEmpty(index)) {
+                return;
+            }
+        }
+    }
+
+    private void initializePinLines() {
+        pins = new HashMap<>();
+        pins.put(Piece.WHITE, new ArrayList<>());
+        pins.put(Piece.BLACK, new ArrayList<>());
+
+        for (int index = 0; index < 64; index++) {
+            if (tile[index] == 0) {
+                continue;
+            }
+
+            List<Integer> pinLine = calculatePinLine(index);
+            if (!pinLine.isEmpty()) {
+                pins.get(Piece.color(tile[index])).add(pinLine);
+            }
+        }
+    }
+
+    private List<Integer> calculatePinLine(int index) {
+        List<Integer> pinLine = new ArrayList<>();
+        int kingIndex = kingPositions.get(turn);
+
+        //pawns, knights and kings can't pin
+        if (isPawn(index) || isKnight(index) || isKing(index)) {
+            return pinLine;
+        }
+
+        int[] directions = MoveGenerator.getDirections(Piece.type(tile[index]));
+        for (int dir : directions) {
+            int posDif = kingIndex - index;
+            int steps = MoveGenerator.getEdgeOfBoard(index, dir);
+
+            //if piece can't see the king in this direction, or if it's at the edge of the board, don't search
+            if (dir * posDif < 0 || posDif % dir != 0 || steps == 0) {
+                continue;
+            }
+
+            int curIndex = index;
+            boolean canPin = false;
+
+            //we add the square that the piece is on, so that captures can break the pin
+            pinLine.add(index);
+
+            for (int step = 0; step < steps; step++) {
+                curIndex = curIndex + dir;
+                System.out.println(curIndex);
+
+                //if tile is empty, add it to the list
+                if (tile[curIndex] == 0) {
+                    pinLine.add(curIndex);
+                    continue;
+                }
+
+                //if you see your own piece, that means it's not a pin in that direction
+                if (Piece.color(tile[index]) == Piece.color(tile[curIndex])) {
+                    pinLine.clear();
+                    break;
+                }
+
+                //if we find a king of the opposite color, and it's a pin, so return the pin line
+                if (isKing(curIndex)) {
+                    if (canPin) {
+                        System.out.println(pinLine);
+                        pinLine.add(curIndex);
+                        return pinLine;
+                    } else {
+                        pinLine.clear();
+                        break;
+                    }
+                }
+
+                /*if we get here, the tile contains a piece that is of the other color. If canPin is true, this is
+                the second opponents piece we encountered, so a pin is not possible*/
+                if (canPin) {
+                    pinLine.clear();
+                    break;
+                }
+
+                //if we get here that means we found an opponents piece that is not a king, so a pin is possible
+                pinLine.add(curIndex);
+                canPin = true;
+            }
+
+            //if we get here, that means this direction didn't return a pin, so clear the list and try the next direction
+            pinLine.clear();
+        }
+
+        return pinLine;
+    }
+
+    // <--> ATTACKED TILES AND PIN LINES <--> //
+
+    // <--> GAME OVER, CHECKS AND MOVE LEGALITY <--> //
 
     /**
      * Updates the gameOver variable according to the current game state
      */
     private void checkGameOver() {
-        int color = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
-        List<List<Integer>> attackedSquares = MoveGenerator.getAttackedSquares(this, color);
+        int otherColor = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        List<List<Integer>> attackedSquares = attackedTiles.get(otherColor);
 
         //if no legal moves exist, it's either checkmate or stalemate
         if (!MoveGenerator.legalMovesExist(this, attackedSquares)) {
@@ -570,21 +834,12 @@ public class Board {
     }
 
     /**
-     * Determines if the king of the given color is in check.
+     * Determines if the king of player whose turn it is, is in check.
      *
-     * @param color color of the king.
      * @return true if the king is in check, false otherwise.
      */
-    public boolean isCheck(int color, List<List<Integer>> attackedSquares) {
-        int kingIndex = getKingIndex(color);
-
-        for (List<Integer> lineOfSight : attackedSquares) {
-            if (lineOfSight.contains(kingIndex)) {
-                return true;
-            }
-        }
-
-        return false;
+    public boolean isCheck() {
+        return check != -1;
     }
 
     /**
@@ -594,7 +849,7 @@ public class Board {
      */
     private boolean isCheckMate(List<List<Integer>> attackedSquares) {
         int color = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
-        return isCheck(color, attackedSquares);
+        return isCheck();
     }
 
     /**
@@ -604,7 +859,7 @@ public class Board {
      */
     private boolean isStalemate(List<List<Integer>> attackedSquares) {
         int color = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
-        return !isCheck(color, attackedSquares);
+        return !isCheck();
     }
 
     /**
@@ -676,7 +931,119 @@ public class Board {
         return insufficientMaterialWhite && insufficientMaterialBlack;
     }
 
-    // <--> GAME OVER CONDITIONS <--> //
+    private void getCheckLine() {
+        int otherColor = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        int kingIndex = kingPositions.get(turn);
+        check = -1;
+
+        for (int index = 0; index < attackedTiles.get(otherColor).size(); index++) {
+            List<Integer> lineOfSight = attackedTiles.get(otherColor).get(index);
+
+            //if the king is in check, it will be the last thing in a line of sight, so only check that
+            if (lineOfSight.get(lineOfSight.size() - 1) != kingIndex) {
+                continue;
+            }
+
+            //if we already found a check, then this is a double check, so update variable and stop searching
+            if (check != -1) {
+                check = (check + 1) * 100 + index;
+                return;
+            }
+
+            //if we get here we found a check
+            check = index;
+        }
+    }
+
+    public boolean isLegalMove(int start, int end) {
+        int otherColor = (turn == Piece.WHITE) ? Piece.BLACK : Piece.WHITE;
+        List<List<Integer>> attackedTilesColor = attackedTiles.get(otherColor);
+        List<List<Integer>> pinLinesColor = pins.get(otherColor);
+
+        //if we are moving the king, make sure he is not in a square attacked by the opponent
+        if (isKing(start)) {
+            for (List<Integer> lineOfSight : attackedTilesColor) {
+                //if the king is moving to a square that is in the line of sight, it's in check so illegal
+                if (lineOfSight.contains(end)) {
+                    return false;
+                }
+            }
+
+            //the king was not in check and moved to a square that is not attacked by an enemy piece
+            if (check == -1) {
+                return true;
+            }
+
+            /*line of sight stops at king, so the square behind him, that is technically still under attack
+              by the enemy piece, is not in attacked tiles. Make sure he doesn't move there*/
+            if (check < attackedTilesColor.size()) {
+                //get index the piece is on
+                int index = attackedTilesColor.get(check).get(0);
+
+                //pawns only check for the square in front of them
+                if (isPawn(index)) {
+                    return true;
+                }
+
+                int direction = attackedTilesColor.get(check).get(1) - index;
+                return start + direction != end;
+            }
+
+            //same thing but for double checks
+            int[] checks = {check % 100, (check / 100) - 1};
+
+            for (int line : checks) {
+                //get index the piece is on
+                int index = attackedTilesColor.get(line).get(0);
+
+                //pawns only check for the square in front of them
+                if (isPawn(index)) {
+                    continue;
+                }
+
+                int direction = attackedTilesColor.get(line).get(1) - index;
+                if (start + direction == end) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        //if we get here that means we are not moving the king, and it's a double check, so move is not legal
+        if (check > attackedTilesColor.size()) {
+            return false;
+        }
+
+        //if we get here, the king is not in check, so make sure the piece isn't pinned
+        int pinned = -1;
+        for (int index = 0; index < pinLinesColor.size(); index++) {
+            //if this piece is not pinned, continue
+            if (!pinLinesColor.get(index).contains(start)) {
+                continue;
+            }
+
+            //if the piece is moving out of the pin, it would result in a check, save pinLine index to make sure is legal
+            pinned = index;
+            break;
+        }
+
+        //if we are in check, make sure to either block it or capture the piece checking the king
+        if (check != -1) {
+            //if we are either capturing the piece checking us or moving in front of the check, it's legal (except if the piece is pinned)
+            return attackedTilesColor.get(check).contains(end) && (pinned == -1);
+        }
+
+        //make sure the piece is still in the pin line
+        if (pinned != -1) {
+            return pinLinesColor.get(pinned).contains(end);
+        }
+
+        //if we get here, the piece isn't pinned, and it's not a check, so it's free to move
+        return true;
+    }
+
+    // <--> GAME OVER, CHECKS AND MOVE LEGALITY <--> //
 
     // <--> FEN AND PRINTING <--> //
 
@@ -993,6 +1360,14 @@ public class Board {
             return (castleRights & 0b0001) == 0b0001;
         }
         return (castleRights & 0b0100) == 0b0100;
+    }
+
+    public List<List<Integer>> getAttackedTiles(int color) {
+        return attackedTiles.get(color);
+    }
+
+    public List<List<Integer>> getPins(int color) {
+        return pins.get(color);
     }
 
     // <--> GETTERS, SETTERS AND SUCH <--> //
