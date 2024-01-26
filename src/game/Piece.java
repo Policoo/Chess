@@ -13,16 +13,33 @@ public class Piece {
     public static final int WHITE = 8;
     public static final int BLACK = 16;
 
+    // Masks
+    private static final int TYPE_MASK = 0x7;
+    private static final int COLOR_MASK = 0x18;
+    private static final int INDEX_MASK = 0x3E0;
+
     public static int create(int type, int color) {
         return type | color;
     }
 
     public static int type(int piece) {
-        return piece & 7;
+        return piece & TYPE_MASK;
     }
 
     public static int color(int piece) {
-        return piece & 24;
+        return piece & COLOR_MASK;
+    }
+
+    public static int index(int piece) {
+        return (piece & INDEX_MASK) >> 5;
+    }
+
+    public static int setIndex(int piece, int index) {
+        return piece | (index << 5);
+    }
+
+    public static int ignoreIndex(int piece) {
+        return piece & (TYPE_MASK | COLOR_MASK);
     }
 
     public static String string(int piece) {

@@ -19,4 +19,19 @@ public class Utils {
 
         return y + x;
     }
+
+    public static String bitboardToString(long bitboard) {
+        StringBuilder result = new StringBuilder();
+
+        for (int rank = 0; rank < 8; rank++) {
+            for (int file = 0; file < 8; file++) {
+                long mask = 1L << (rank * 8 + file);
+                int bit = (bitboard & mask) != 0 ? 1 : 0;
+                result.append(bit).append(" ");
+            }
+            result.append("\n");
+        }
+
+        return result.toString();
+    }
 }

@@ -5,6 +5,9 @@ import engines.Engine;
 import game.Board;
 import game.Move;
 import game.Piece;
+import game.PrecomputedGameData;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -32,12 +35,14 @@ public class GamePane extends BorderPane {
     private Board board;
     private Engine engine;
 
+    private final Deque<Move> moveHistory;
     private List<Move> legalMoves;
     private final List<Integer> pieceMoves;
     private final List<Integer> promotionTiles;
     private Move promotionMove;
     private int lastClick;
     private int perspective;
+    public final BooleanProperty move;
 
     // <--> INITIALIZATION <--> //
 
@@ -92,19 +97,21 @@ public class GamePane extends BorderPane {
         }
 
         Zobrist.initialize();
-        MoveGenerator.initialize();
+        PrecomputedGameData.initialize();
 
         board = new Board();
         updateBoard();
 
         pieceMoves = new ArrayList<>();
         promotionTiles = new ArrayList<>();
+        moveHistory = new LinkedList<>();
+        move = new SimpleBooleanProperty(false);
         legalMoves = MoveGenerator.generateMoves(board);
     }
 
     private void fillPieceImages() throws FileNotFoundException {
         piecesImages = new ArrayList<>();
-        Image allPiecesImage = new Image(new FileInputStream("src/images/pieces.png"));
+        Image allPiecesImage = new Image(new FileInputStream("src/gui/resources/pieces.png"));
         PixelReader pixelReader = allPiecesImage.getPixelReader();
 
         for (int y = 0; y < allPiecesImage.getHeight(); y += 200) {
@@ -188,6 +195,7 @@ public class GamePane extends BorderPane {
             ImageView imageView = new ImageView(piecesImages.get(pieceIndex).getImage());
             imageView.setFitWidth(64);
             imageView.setFitHeight(64);
+            imageView.setSmooth(true);
             tile[index].setGraphic(imageView);
         }
     }
@@ -383,6 +391,7 @@ public class GamePane extends BorderPane {
     }
 
     private void makeMove(Move move) {
+        moveHistory.add(move);
         board.makeMove(move);
         updateBoard();
 
@@ -398,6 +407,21 @@ public class GamePane extends BorderPane {
 
         //generate new legal moves
         legalMoves = MoveGenerator.generateMoves(board);
+        this.move.set(!this.move.get());
+    }
+
+    public void undoMove() {
+        if (moveHistory.isEmpty()) {
+            return;
+        }
+
+        Move move = moveHistory.pollLast();
+        board.undoMove(move);
+        updateBoard();
+        resetColors();
+
+        //generate new legal moves
+        legalMoves = MoveGenerator.generateMoves(board);
     }
 
     public void flipBoard() {
@@ -409,6 +433,7 @@ public class GamePane extends BorderPane {
 
     public void resetBoard() {
         board = new Board();
+        moveHistory.clear();
         legalMoves = MoveGenerator.generateMoves(board);
         resetColors();
         updateBoard();
@@ -416,6 +441,7 @@ public class GamePane extends BorderPane {
 
     public void makeBoardFromFen(String fenString) {
         board = new Board(fenString);
+        moveHistory.clear();
         legalMoves = MoveGenerator.generateMoves(board);
         resetColors();
         updateBoard();
@@ -443,7 +469,9 @@ public class GamePane extends BorderPane {
             if (count == fishResults.get(move)) {
                 results.add(move + ": " + count);
             } else {
-                results.add(move + ": " + count + ", StockFish: " + fishResults.get(move));
+                String difference = (fishResults.get(move) - count > 0) ?
+                        " (+" + (fishResults.get(move) - count) + ")" : " (" + (fishResults.get(move) - count) + ")";
+                results.add(move + ": " + count + ", StockFish: " + fishResults.get(move) + difference);
             }
 
             iterator.remove();
@@ -480,5 +508,9 @@ public class GamePane extends BorderPane {
 
     public int getPerspective() {
         return perspective;
+    }
+
+    public String getBoardState() {
+        return board.getFullState();
     }
 }

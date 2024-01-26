@@ -26,9 +26,12 @@ public class OptionsPane extends VBox {
     private ComboBox<Engine> engine2Choice;
 
     public final BooleanProperty reset;
+    public final BooleanProperty debug;
+    public final BooleanProperty undo;
     public final BooleanProperty flip;
     public final StringProperty fen;
     public final StringProperty depth;
+
     public final ObjectProperty<Engine> opponent;
     public final ObjectProperty<Engine> engine1;
     public final ObjectProperty<Engine> engine2;
@@ -40,6 +43,8 @@ public class OptionsPane extends VBox {
 
         availableEngines = new Engine[]{new Random("b"), new Greedy("b")};
         reset = new SimpleBooleanProperty(false);
+        debug = new SimpleBooleanProperty(false);
+        undo = new SimpleBooleanProperty(false);
         flip = new SimpleBooleanProperty(false);
         fen = new SimpleStringProperty("");
         depth = new SimpleStringProperty("");
@@ -48,7 +53,7 @@ public class OptionsPane extends VBox {
         engine2 = new SimpleObjectProperty<>(null);
 
         try {
-            constructResetAndFlip();
+            constructTopButtons();
         } catch (FileNotFoundException e) {
             System.out.println("Error: Flip board image was not found!");
             System.exit(1);
@@ -64,19 +69,48 @@ public class OptionsPane extends VBox {
         getChildren().add(placeHolder);
     }
 
-    private void constructResetAndFlip() throws FileNotFoundException {
+    private void constructTopButtons() throws FileNotFoundException {
         HBox container = new HBox();
         container.setAlignment(Pos.CENTER);
         container.setPrefSize(299, 40);
         container.setStyle("-fx-background-color: #3d3d3d; -fx-padding: 5px");
+
+        Pane spacer1 = new Pane();
+        HBox.setHgrow(spacer1, Priority.ALWAYS);
+
+        Pane spacer2 = new Pane();
+        HBox.setHgrow(spacer2, Priority.ALWAYS);
+
+        Pane spacer3 = new Pane();
+        HBox.setHgrow(spacer3, Priority.ALWAYS);
 
         Button resetButton = new Button("Reset");
         resetButton.setPrefSize(50, 25);
         resetButton.getStyleClass().add("std-button");
         resetButton.setOnAction(event -> reset.set(true));
 
-        Pane spacer = new Pane();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button debugButton = new Button("Debug");
+        debugButton.setPrefSize(50, 25);
+        debugButton.getStyleClass().add("std-button");
+        debugButton.setOnAction(event -> {
+            for (int s = 0; s < debugButton.getStyleClass().size(); s++) {
+                if (debugButton.getStyleClass().get(s).contains("std-button")) {
+                    debugButton.getStyleClass().set(s, "debug-button-active");
+                    break;
+                }
+
+                if (debugButton.getStyleClass().get(s).contains("debug-button-active")) {
+                    debugButton.getStyleClass().set(s, "std-button");
+                    break;
+                }
+            }
+            debug.set(true);
+        });
+
+        Button undoButton = new Button("Undo");
+        undoButton.setPrefSize(50, 25);
+        undoButton.getStyleClass().add("std-button");
+        undoButton.setOnAction(event -> undo.set(true));
 
         Button flipButton = new Button();
         flipButton.setPrefSize(50, 25);
@@ -84,13 +118,13 @@ public class OptionsPane extends VBox {
         flipButton.getStyleClass().add("flip");
         flipButton.setOnAction(event -> flip.set(true));
 
-        Image flipImage = new Image(new FileInputStream("src/images/flip board.png"));
+        Image flipImage = new Image(new FileInputStream("src/gui/resources/flip board.png"));
         ImageView flipImageView = new ImageView(flipImage);
         flipImageView.setFitWidth(20);
         flipImageView.setFitHeight(20);
         flipButton.setGraphic(flipImageView);
 
-        container.getChildren().addAll(resetButton, spacer, flipButton);
+        container.getChildren().addAll(resetButton, spacer1, debugButton, spacer2, undoButton, spacer3, flipButton);
         getChildren().add(container);
     }
 
@@ -209,7 +243,7 @@ public class OptionsPane extends VBox {
 
         Image image = null;
         try {
-            image = new Image(new FileInputStream("src/images/swords.png"));
+            image = new Image(new FileInputStream("src/gui/resources/swords.png"));
         } catch (FileNotFoundException e) {
             System.out.println("Error: Swords image was not found!");
             System.exit(1);

@@ -3,6 +3,7 @@ package utils;
 import engines.Counter;
 import game.Board;
 import game.Move;
+import game.PrecomputedGameData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class FunctionTimer {
         Zobrist.initialize();
         Counter counter = new Counter();
         Board board = new Board();
-        MoveGenerator.initialize();
+        PrecomputedGameData.initialize();
 
         long startTime = System.nanoTime();
 

@@ -38,6 +38,7 @@ public class Counter {
             board.makeMove(move);
             int movePositions = countPositions(board, depth - 1);
             board.undoMove(move);
+
             numPositions += movePositions;
             if (depth == this.depth) {
                 System.out.println(move + ": " + movePositions);

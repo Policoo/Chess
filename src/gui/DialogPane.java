@@ -4,7 +4,9 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 
 import java.util.List;
 
@@ -39,18 +41,22 @@ public class DialogPane extends VBox {
         getChildren().add(scrollPane);
     }
 
+    public void displayDebug(String debugInfo) {
+        content.getChildren().clear();
+
+        Text messageLabel = new Text(debugInfo);
+        messageLabel.getStyleClass().add("debug-text");
+
+        content.getChildren().add(messageLabel);
+    }
+
     public void displayMessage(String message) {
         content.getChildren().clear();
 
         Label messageLabel = new Label(message);
         messageLabel.setWrapText(true);
         messageLabel.setMaxWidth(280);
-        messageLabel.setStyle("-fx-text-fill: white;" +
-                "-fx-font-size: 13px;" +
-                "-fx-border-width: 0 0 0 1px;" +
-                "-fx-border-color: black;" +
-                "-fx-padding: 3px;"
-        );
+        messageLabel.getStyleClass().add("regular-text");
 
         content.getChildren().add(messageLabel);
     }
@@ -71,13 +77,8 @@ public class DialogPane extends VBox {
         for (int index = 1; index < results.size(); index++) {
             Label messageLabel = new Label(results.get(index));
             messageLabel.setWrapText(true);
-            messageLabel.setMaxWidth(280);
-            messageLabel.setStyle("-fx-text-fill: white;" +
-                    "-fx-font-size: 13px;" +
-                    "-fx-border-width: 0 0 0 1px;" +
-                    "-fx-border-color: black;" +
-                    "-fx-padding: 3px;"
-            );
+            messageLabel.setMaxWidth(290);
+            messageLabel.getStyleClass().add("regular-text");
             content.getChildren().add(messageLabel);
         }
     }

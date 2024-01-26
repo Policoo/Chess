@@ -21,24 +21,64 @@ public class Chess extends Application {
     private DialogPane dialogPane;
     private GamePane gamePane;
 
+    private boolean debugMode;
+
     public void start(Stage stage) throws Exception {
         dialogPane = new DialogPane();
         gamePane = new GamePane();
+        gamePane.move.addListener((observable, oldValue, newValue) -> {
+            if (newValue && debugMode) {
+                dialogPane.displayDebug(gamePane.getBoardState());
+                gamePane.move.set(false);
+            }
+        });
+        debugMode = false;
 
         OptionsPane optionsPane = new OptionsPane();
         optionsPane.reset.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 gamePane.resetBoard();
-                dialogPane.displayMessage("Board has been reset!");
+                if (debugMode) {
+                    dialogPane.displayDebug(gamePane.getBoardState());
+                } else {
+                    dialogPane.displayMessage("Board has been reset!");
+                }
                 optionsPane.reset.set(false);
+            }
+        });
+
+        optionsPane.debug.addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                debugMode = !debugMode;
+                if (debugMode) {
+                    dialogPane.displayDebug(gamePane.getBoardState());
+                } else {
+                    dialogPane.displayMessage("Debug mode deactivated!");
+                }
+
+                optionsPane.debug.set(false);
+            }
+        });
+
+        optionsPane.undo.addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                gamePane.undoMove();
+                if (debugMode) {
+                    dialogPane.displayDebug(gamePane.getBoardState());
+                } else {
+                    dialogPane.displayMessage("Undoing move!");
+                }
+                optionsPane.undo.set(false);
             }
         });
 
         optionsPane.flip.addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 gamePane.flipBoard();
-                String per = (gamePane.getPerspective() == Piece.WHITE) ? "white" : "black";
-                dialogPane.displayMessage("You are now playing as " + per + "!");
+                if (!debugMode) {
+                    String per = (gamePane.getPerspective() == Piece.WHITE) ? "white" : "black";
+                    dialogPane.displayMessage("You are now playing as " + per + "!");
+                }
                 optionsPane.flip.set(false);
             }
         });
@@ -55,7 +95,11 @@ public class Chess extends Application {
                 }
 
                 gamePane.makeBoardFromFen(newValue);
-                dialogPane.displayMessage("Board has been made from FEN string: " + newValue);
+                if (debugMode) {
+                    dialogPane.displayDebug(gamePane.getBoardState());
+                } else {
+                    dialogPane.displayMessage("Board has been made from FEN string: " + newValue);
+                }
                 optionsPane.fen.set("");
             }
         });

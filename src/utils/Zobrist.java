@@ -41,6 +41,7 @@ public class Zobrist {
     }
 
     public static long getKey(int index, int piece) {
+        piece = Piece.ignoreIndex(piece);
         piece = (piece > 14) ? piece  - 13 : piece - 9;
         return KEYS[index][piece];
     }
