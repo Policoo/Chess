@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Chess", "Chess.vcxproj", "{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		ProfileBuild|x64 = ProfileBuild|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.Debug|x64.ActiveCfg = Debug|x64
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.Debug|x64.Build.0 = Debug|x64
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.ProfileBuild|x64.ActiveCfg = ProfileBuild|x64
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.ProfileBuild|x64.Build.0 = ProfileBuild|x64
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.Release|x64.ActiveCfg = Release|x64
+		{E5728106-C873-4DD9-AFC6-6BEDC6C38C4D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C523E4E-0833-4E87-8EAC-149B37435E59}
+	EndGlobalSection
+EndGlobal
