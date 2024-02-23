@@ -1,2 +1,3 @@
 # Ignore all folders named "node_modules"
 bin/
+/.vs
