@@ -12,7 +12,7 @@ class EngineWorker : public QObject {
 	Q_OBJECT
 
 public:
-	EngineWorker(QObject* parent);
+	EngineWorker(QObject* = nullptr);
 
 	void bestMove(Board& board);
 

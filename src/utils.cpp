@@ -1,6 +1,7 @@
 #include <iostream>
-#include <QString>
 #include <QProcess>
+#include <QCoreApplication>
+#include <QDir>
 #include <sstream>
 #include <bitset>
 
@@ -72,12 +73,21 @@ std::unordered_map<std::string, int> parsePerftResults(const std::string& result
 
 std::unordered_map<std::string, int> stockFishPerft(const std::string& fenString, int depth) {
     // Set the path to your Stockfish executable
-    QString stockfishPath = R"(C:\Users\1flor\source\repos\Chess\stockfish\stockfish-windows-x86-64-avx2.exe)";
+    QDir dir(QCoreApplication::applicationDirPath());;
+
+    // Go up to Chess/bin
+    dir.cdUp();
+    // Go up to Chess/
+    dir.cdUp();
+    // Now go into resources/stockfish
+    dir.cd("resources");
+    dir.cd("stockfish");
+
+    QString stockfishPath = dir.absoluteFilePath("stockfish-windows-x86-64-avx2.exe");
+
     std::unordered_map<std::string, int> results;
 
     QProcess stockfishProcess;
-
-    // Start Stockfish
     stockfishProcess.start(stockfishPath);
 
     if (!stockfishProcess.waitForStarted()) {

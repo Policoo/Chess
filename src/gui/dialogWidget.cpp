@@ -3,6 +3,7 @@
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QLabel>
+#include <QFontDatabase>
 #include <iostream>
 
 DialogWidget::DialogWidget(QWidget* parent) : QWidget(parent) {
@@ -81,8 +82,13 @@ void DialogWidget::displayDebugString(const std::string& debugString) {
         "font-size: 9pt;"
     );
 
-    QFont font("Consolas");
-    messageLabel->setFont(font);
+    if (const int fontId = QFontDatabase::addApplicationFont(":/resources/FiraCode-VariableFont_wght.ttf"); fontId != -1) {
+        const QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
+        const QFont font(fontFamily);
+        messageLabel->setFont(font);
+    } else {
+        qWarning() << "Failed to load the font from resources.";
+    }
 
     layout->addWidget(messageLabel);
 }

@@ -2,5 +2,7 @@
     <qresource prefix="/resources">
         <file>chess pieces.png</file>
         <file>flip board.png</file>
+        <file>icon.png</file>
+        <file>FiraCode-VariableFont_wght.ttf</file>
     </qresource>
 </RCC>

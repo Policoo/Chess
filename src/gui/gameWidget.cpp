@@ -438,14 +438,15 @@ void GameWidget::makeBoardFromFen(const std::string& fenString) {
 }
 
 void GameWidget::goPerft(int depth) {
-	auto engineWorker = new EngineWorker(this);
+	auto engineWorker = new EngineWorker();
 	connect(engineWorker, &EngineWorker::perftDone, this, &GameWidget::perftResultsReady);
 
 	const auto thread = new QThread;
 	engineWorker->moveToThread(thread);
+
 	connect(thread, &QThread::started, [engineWorker, this, depth]() {
 		engineWorker->goPerft(*board, depth);
-		});
+	});
 	connect(engineWorker, &EngineWorker::perftDone, thread, &QThread::quit);
 	connect(engineWorker, &EngineWorker::perftDone, engineWorker, &EngineWorker::deleteLater);
 	connect(thread, &QThread::finished, thread, &QThread::deleteLater);
