@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>chess pieces.png</file>
+        <file>flip board.png</file>
+    </qresource>
+</RCC>

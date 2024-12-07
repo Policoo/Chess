@@ -1,6 +1,7 @@
 #include <QHBoxLayout>
 #include <QThread>
 #include <QVBoxLayout>
+#include <QDir>
 
 #include <iostream>
 #include <memory>
@@ -129,7 +130,7 @@ void GameWidget::addCoordinates() {
 }
 
 void GameWidget::initializePieceImages() {
-	const QImage fullImage("src/resources/chess pieces.png");
+	const QImage fullImage(":/resources/chess pieces.png");
 
 	// Cut up the image into pieces
 	for (int y = 0; y < fullImage.height(); y += 200) {

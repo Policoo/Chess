@@ -110,7 +110,7 @@ void OptionsWidget::constructTopButtons() {
 
 	auto* imageButton = new QPushButton(widget);
 	imageButton->setFixedSize(50, 27);
-	imageButton->setIcon(QIcon("src/resources/flip board.png"));
+	imageButton->setIcon(QIcon(":/resources/flip board.png"));
 	imageButton->setIconSize(QSize(20, 23));
 	imageButton->setStyleSheet(
 		"QPushButton {"

@@ -1,10 +1,11 @@
-#include <QtWidgets/QApplication>
+#include <QApplication>
 #include <Windows.h>
 #include <iostream>
 
-#include "gui/chess.h"
+#include "src/gui/chess.h"
 
 int main(int argc, char* argv[]) {
+
 #ifdef _DEBUG
     AllocConsole();
     FILE* pConsole;
@@ -12,9 +13,9 @@ int main(int argc, char* argv[]) {
     *stdout = *pConsole;
     setvbuf(stdout, nullptr, _IONBF, 0);
 #endif
+
     QApplication a(argc, argv);
     Chess w;
     w.show();
     return QApplication::exec();
 }
-
