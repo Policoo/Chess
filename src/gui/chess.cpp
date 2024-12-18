@@ -4,7 +4,7 @@
 #include <iostream>
 #include <QHBoxLayout>
 
-Chess::Chess(QWidget* parent) : 
+Chess::Chess(QWidget* parent) :
     QMainWindow(parent),
     debug(false) {
     mainWidget = new QWidget(this);
@@ -57,7 +57,7 @@ void Chess::debugMode() {
     else {
         dialogWidget->displayMessage("Debug mode off!");
     }
-    
+
 }
 
 void Chess::undoMove() {
@@ -109,8 +109,7 @@ void Chess::goPerft(const std::string& depth) {
         }
 
         boardWidget->goPerft(depthInt);
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Caught exception: " << e.what() << std::endl;
         dialogWidget->displayMessage("Depth input is not a number!");
     }
@@ -128,4 +127,3 @@ void Chess::setOpponent(std::string opponentChoice) {
 void Chess::startEngineMatch(std::string engine1, std::string engine2) {
     std::cout << engine1 << ", " << engine2 << std::endl;
 }
-

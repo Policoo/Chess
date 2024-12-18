@@ -6,7 +6,8 @@
 #include <QFontDatabase>
 #include <iostream>
 
-DialogWidget::DialogWidget(QWidget* parent) : QWidget(parent) {
+DialogWidget::DialogWidget(QWidget* parent) :
+    QWidget(parent) {
     setFixedSize(300, 552);
 
     auto* widget = new QWidget(this);
@@ -29,18 +30,18 @@ DialogWidget::DialogWidget(QWidget* parent) : QWidget(parent) {
     auto* descText = new QLabel("Dialog box", desc);
     descText->setAlignment(Qt::AlignCenter);
     descText->setStyleSheet(
-        "color: white;"
-        "font-size: 18px;"
-        "font-weight: bold;"
-    );
+            "color: white;"
+            "font-size: 18px;"
+            "font-weight: bold;"
+            );
     descLayout->addWidget(descText);
     vLayout->addWidget(desc);
 
     auto* scrollArea = new QScrollArea(widget);
     scrollArea->setStyleSheet(
-        "border: none;"
-        "background-color: #3d3d3d;"
-    );
+            "border: none;"
+            "background-color: #3d3d3d;"
+            );
     scrollArea->setWidgetResizable(true);
 
     scrollWidget = new QWidget(scrollArea);
@@ -52,23 +53,23 @@ DialogWidget::DialogWidget(QWidget* parent) : QWidget(parent) {
 
     QScrollBar* scrollBar = scrollArea->verticalScrollBar();
     scrollBar->setStyleSheet(
-        "QScrollBar:vertical {"
-        "    border: 1px solid #3d3d3d;"
-        "    background: #565656;"
-        "    width: 6px;"
-        "    margin: 0px 0px 0px 0px;"
-        "}"
-        "QScrollBar::handle:vertical {"
-        "    background: #7f7f7f;"
-        "    min-height: 10px;"
-        "}"
-        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
-        "    background: none;"
-        "}"
-        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
-        "    background: #565656;"
-        "}"
-    );
+            "QScrollBar:vertical {"
+            "    border: 1px solid #3d3d3d;"
+            "    background: #565656;"
+            "    width: 6px;"
+            "    margin: 0px 0px 0px 0px;"
+            "}"
+            "QScrollBar::handle:vertical {"
+            "    background: #7f7f7f;"
+            "    min-height: 10px;"
+            "}"
+            "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {"
+            "    background: none;"
+            "}"
+            "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {"
+            "    background: #565656;"
+            "}"
+            );
 }
 
 void DialogWidget::displayDebugString(const std::string& debugString) {
@@ -78,15 +79,17 @@ void DialogWidget::displayDebugString(const std::string& debugString) {
     messageLabel->setFixedWidth(270);
     messageLabel->setWordWrap(true);
     messageLabel->setStyleSheet("color: white;"
-        "padding: 3px;"
-        "font-size: 9pt;"
-    );
+            "padding: 3px;"
+            "font-size: 9pt;"
+            );
 
-    if (const int fontId = QFontDatabase::addApplicationFont(":/resources/FiraCode-VariableFont_wght.ttf"); fontId != -1) {
+    if (const int fontId = QFontDatabase::addApplicationFont(":/resources/FiraCode-VariableFont_wght.ttf");
+        fontId != -1) {
         const QString fontFamily = QFontDatabase::applicationFontFamilies(fontId).at(0);
         const QFont font(fontFamily);
         messageLabel->setFont(font);
-    } else {
+    }
+    else {
         qWarning() << "Failed to load the font from resources.";
     }
 
@@ -102,9 +105,9 @@ void DialogWidget::displayMessage(const std::string& message) {
     messageLabel->setFixedWidth(270);
     messageLabel->setWordWrap(true);
     messageLabel->setStyleSheet("color: white;"
-        "padding: 3px;"
-        "font-size: 10pt;"
-    );
+            "padding: 3px;"
+            "font-size: 10pt;"
+            );
 
     layout->addWidget(messageLabel);
 }
@@ -118,10 +121,10 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
     desc->setFixedWidth(270);
     desc->setWordWrap(true);
     desc->setStyleSheet("color: white;"
-        "padding: 3px;"
-        "font-weight: bold;"
-        "font-size: 12pt;"
-    );
+            "padding: 3px;"
+            "font-weight: bold;"
+            "font-size: 12pt;"
+            );
 
     layout->addWidget(desc);
 
@@ -152,9 +155,9 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         moveLabel->setFixedWidth(270);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
-            "padding: 3px;"
-            "font-size: 10pt;"
-        );
+                "padding: 3px;"
+                "font-size: 10pt;"
+                );
 
         layout->addWidget(moveLabel);
     }
@@ -173,9 +176,9 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         moveLabel->setFixedWidth(270);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
-            "padding: 3px;"
-            "font-size: 10pt;"
-        );
+                "padding: 3px;"
+                "font-size: 10pt;"
+                );
 
         layout->addWidget(moveLabel);
         return;
@@ -188,9 +191,9 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         moveLabel->setFixedWidth(270);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
-            "padding: 3px;"
-            "font-size: 10pt;"
-        );
+                "padding: 3px;"
+                "font-size: 10pt;"
+                );
 
         layout->addWidget(moveLabel);
     }

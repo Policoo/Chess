@@ -18,7 +18,7 @@ public:
 
     /**
      * @brief Creates a piece with the given color and type.
-     * 
+     *
      * @param type Type of the piece, for example Piece::PAWN.
      * @param color Color of the piece (Piece::WHITE or Piece::BLACK).
      * @return Integer representing a piece.
@@ -35,7 +35,7 @@ public:
 
     /**
      * @brief Does bit operations on the piece integer to get determine its color.
-     * 
+     *
      * @param piece Piece to calculate the color of.
      * @return An integer equal to either Piece::WHITE or Piece::BLACK
     */
@@ -72,7 +72,7 @@ public:
 
     /**
      * @brief Determines a char to represent the piece.
-     * 
+     *
      * @param piece - Piece to represent into a char.
      * @return P/N/B/R/Q/K depending on the piece type. Char will be lower case if piece is black.
     */

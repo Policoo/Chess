@@ -9,20 +9,20 @@
 #include "../board.h"
 
 class EngineWorker : public QObject {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	EngineWorker(QObject* = nullptr);
+    EngineWorker(QObject* = nullptr);
 
-	void bestMove(Board& board);
+    void bestMove(Board& board);
 
-	void setEngine(std::string engine);
+    void setEngine(std::string engine);
 
 public slots:
-	void goPerft(Board& board, int depth);
+    void goPerft(Board& board, int depth);
 
 signals:
-	void perftDone(std::vector<std::string> counterResults);
+    void perftDone(std::vector<std::string> counterResults);
 
-	void moveReady(Move move);
+    void moveReady(Move move);
 };

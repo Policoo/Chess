@@ -9,17 +9,10 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
     const std::vector<Move> moves = MoveGenerator::generateMoves(*board);
 
     int numPositions = 0;
-    for (const Move& move : moves) {
-#ifdef _DEBUG
-        std::cout << move.toString() << ": ";
-#endif
-
+    for (const Move& move: moves) {
         if (depth == 1) {
             results[move.toString()] = 1;
             numPositions += 1;
-#ifdef _DEBUG
-            std::cout << "1\n";
-#endif
             continue;
         }
 
@@ -27,9 +20,6 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
         const int movePositions = countPositions(*board, depth - 1);
         board->undoMove(move);
 
-#ifdef _DEBUG
-        std::cout << movePositions << "\n";
-#endif
         results[move.toString()] = movePositions;
         numPositions += movePositions;
     }
@@ -40,7 +30,7 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
     return results;
 }
 
-int Counter::countPositions(Board& board, int depth) {
+int Counter::countPositions(Board& board, const int depth) {
     const std::vector<Move> moves = MoveGenerator::generateMoves(board);
 
     //this is for bulk counting, no reason to actually make all these moves
@@ -49,15 +39,12 @@ int Counter::countPositions(Board& board, int depth) {
     }
 
     int numPositions = 0;
-    for (const Move& move : moves) {
+    for (const Move& move: moves) {
         board.makeMove(move);
         const int movePositions = countPositions(board, depth - 1);
         board.undoMove(move);
 
         numPositions += movePositions;
-        if (numPositions == 2457) {
-            int i = 0;
-        }
     }
 
     return numPositions;

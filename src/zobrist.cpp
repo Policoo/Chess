@@ -39,8 +39,8 @@ uint64_t Zobrist::generateKey() {
 std::array<std::array<uint64_t, 64>, 12> Zobrist::initializeKeys() {
     std::array<std::array<uint64_t, 64>, 12> arr{};
 
-    for (auto& pieceKey : arr) {
-        for (uint64_t& piecePositionKey : pieceKey) {
+    for (auto& pieceKey: arr) {
+        for (uint64_t& piecePositionKey: pieceKey) {
             piecePositionKey = generateKey();
         }
     }
@@ -51,7 +51,7 @@ std::array<std::array<uint64_t, 64>, 12> Zobrist::initializeKeys() {
 std::array<uint64_t, 2> Zobrist::initializeColorKeys() {
     std::array<uint64_t, 2> arr{};
 
-    for (uint64_t& index : arr) {
+    for (uint64_t& index: arr) {
         index = generateKey();
     }
 
@@ -61,7 +61,7 @@ std::array<uint64_t, 2> Zobrist::initializeColorKeys() {
 std::array<uint64_t, 16> Zobrist::initializeCastleKeys() {
     std::array<uint64_t, 16> arr{};
 
-    for (uint64_t& index : arr) {
+    for (uint64_t& index: arr) {
         index = generateKey();
     }
 
@@ -71,7 +71,7 @@ std::array<uint64_t, 16> Zobrist::initializeCastleKeys() {
 std::array<uint64_t, 64> Zobrist::initializeEnPassantKeys() {
     std::array<uint64_t, 64> arr{};
 
-    for (uint64_t& right : arr) {
+    for (uint64_t& right: arr) {
         right = generateKey();
     }
 

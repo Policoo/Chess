@@ -14,7 +14,7 @@ class Move {
 public:
     /**
      * @brief Creates a move object.
-     * 
+     *
      * @param start - Start square index of the move.
      * @param end - End square index of the move.
      * @param flag - Flag of the move.
@@ -47,7 +47,7 @@ public:
 
     /**
      * @brief Sets the promotion type of the move.
-     * 
+     *
      * @param promotion - Piece type of the promotion.
     */
     void setPromotion(const int promotion);

@@ -10,121 +10,121 @@
 #include "../move.h"
 
 class GameWidget : public QWidget {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit GameWidget(QWidget* parent);
+    explicit GameWidget(QWidget* parent);
 
-	void resetBoard();
+    void resetBoard();
 
-	std::string getDebugString();
+    std::string getDebugString();
 
-	void undoMove();
+    void undoMove();
 
-	void flipBoard();
+    void flipBoard();
 
-	void makeBoardFromFen(const std::string& fenString);
+    void makeBoardFromFen(const std::string& fenString);
 
-	void goPerft(int depth);
+    void goPerft(int depth);
 
-	void setOpponent(std::string opponentChoice);
+    void setOpponent(std::string opponentChoice);
 
-	void startEngineMatch(std::string engine1, std::string engine2);
+    void startEngineMatch(std::string engine1, std::string engine2);
 
-	std::string getPerspective();
+    std::string getPerspective();
 
 public slots:
-	void perftDone(std::vector<std::string> results);
+    void perftDone(std::vector<std::string> results);
 
 signals:
-	void moveMadeSignal();
+    void moveMadeSignal();
 
-	void perftResultsReady(std::vector<std::string> results);
+    void perftResultsReady(std::vector<std::string> results);
 
 protected:
-	void mousePressEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
 
 private:
-	QWidget* boardWidget;
+    QWidget* boardWidget;
 
-	QWidget* northWidget;
-	QWidget* eastWidget;
-	QWidget* westWidget;
-	QWidget* southWidget;
+    QWidget* northWidget;
+    QWidget* eastWidget;
+    QWidget* westWidget;
+    QWidget* southWidget;
 
-	std::vector<QLabel*> tile;
-	std::vector<QPixmap> pieceImages;
+    std::vector<QLabel*> tile;
+    std::vector<QPixmap> pieceImages;
 
-	Board* board;
-	std::vector<Move> legalMoves;
-	std::vector<Move> moveHistory;
-	std::vector<int> pieceMoves;
-	std::vector<int> promotionTiles;
-	Move promotionMove;
-	int lastClick;
-	int perspective;
+    Board* board;
+    std::vector<Move> legalMoves;
+    std::vector<Move> moveHistory;
+    std::vector<int> pieceMoves;
+    std::vector<int> promotionTiles;
+    Move promotionMove;
+    int lastClick;
+    int perspective;
 
-	/**
-	 * Initializes the tile array and sets up the board.
-	 */
-	void constructBoard();
+    /**
+     * Initializes the tile array and sets up the board.
+     */
+    void constructBoard();
 
-	/**
-	 * Adds coordinates to board.
-	 */
-	void addCoordinates();
+    /**
+     * Adds coordinates to board.
+     */
+    void addCoordinates();
 
-	/**
-	 * Cuts up the image with the pieces and stores the images in a vector.
-	 */
-	void initializePieceImages();
+    /**
+     * Cuts up the image with the pieces and stores the images in a vector.
+     */
+    void initializePieceImages();
 
-	/**
-	 * Sets the square color to base state
-	 */
-	void resetColors();
+    /**
+     * Sets the square color to base state
+     */
+    void resetColors();
 
-	/**
-	 * Highlights the clicked tile if there is a piece on it.
-	 *
-	 * @param index tile that was clicked.
-	 */
-	void highlightClick(int index);
+    /**
+     * Highlights the clicked tile if there is a piece on it.
+     *
+     * @param index tile that was clicked.
+     */
+    void highlightClick(int index);
 
-	/**
-	 * Highlights the move on the board.
-	 *
-	 * @param move move that was made.
-	 */
-	void highlightMove(Move move);
+    /**
+     * Highlights the move on the board.
+     *
+     * @param move move that was made.
+     */
+    void highlightMove(Move move);
 
-	/**
-	 * Colors the tiles where legal moves are available.
-	 *
-	 * @param index index of piece.
-	 */
-	void showLegalMoves(int index);
+    /**
+     * Colors the tiles where legal moves are available.
+     *
+     * @param index index of piece.
+     */
+    void showLegalMoves(int index);
 
-	/**
-	 * Colors the squares to show the options for promoting a pawn.
-	 *
-	 * @param index tile where promotion is happening.
-	 */
-	void showPromotionOptions(int index);
+    /**
+     * Colors the squares to show the options for promoting a pawn.
+     *
+     * @param index tile where promotion is happening.
+     */
+    void showPromotionOptions(int index);
 
-	/**
-	 * Updates the pieces on the GUI to reflect board state.
-	 */
-	void updateBoard();
+    /**
+     * Updates the pieces on the GUI to reflect board state.
+     */
+    void updateBoard();
 
-	/**
-	 * Processes a click on the board.
-	 *
-	 * @param index tile that was clicked.
-	 */
-	void handleClick(int index);
+    /**
+     * Processes a click on the board.
+     *
+     * @param index tile that was clicked.
+     */
+    void handleClick(int index);
 
-	void makeMove(Move move);
+    void makeMove(Move move);
 
-	void clearWidgets(QWidget* widget);
+    void clearWidgets(QWidget* widget);
 };

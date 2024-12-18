@@ -9,39 +9,39 @@
 #include "dialogWidget.h"
 
 class Chess : public QMainWindow {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-	explicit Chess(QWidget* parent = nullptr);
+    explicit Chess(QWidget *parent = nullptr);
 
 public slots:
-	void resetBoard();
+    void resetBoard();
 
-	void debugMode();
+    void debugMode();
 
-	void undoMove();
+    void undoMove();
 
-	void flipBoard();
+    void flipBoard();
 
-	void moveMade();
+    void moveMade();
 
-	void makeBoardFromFen(const std::string& fenString);
+    void makeBoardFromFen(const std::string &fenString);
 
-	void goPerft(const std::string& depth);
+    void goPerft(const std::string &depth);
 
-	void perftResultsReady(const std::vector<std::string> results);
+    void perftResultsReady(const std::vector<std::string> results);
 
-	void setOpponent(std::string opponentChoice);
+    void setOpponent(std::string opponentChoice);
 
-	void startEngineMatch(std::string engine1, std::string engine2);
+    void startEngineMatch(std::string engine1, std::string engine2);
 
 private:
-	QWidget* mainWidget;
-	QLayout* layout;
+    QWidget *mainWidget;
+    QLayout *layout;
 
-	OptionsWidget* optionsWidget;
-	GameWidget* boardWidget;
-	DialogWidget* dialogWidget;
+    OptionsWidget *optionsWidget;
+    GameWidget *boardWidget;
+    DialogWidget *dialogWidget;
 
-	bool debug;
+    bool debug;
 };
