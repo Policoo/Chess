@@ -4,7 +4,7 @@
 
 #include "move.h"
 #include "piece.h"
-#include "precomputedGameData.h"
+#include "util/precomputedGameData.h"
 
 // <--> MOVE GENERATION <--> //
 

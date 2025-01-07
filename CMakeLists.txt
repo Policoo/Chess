@@ -48,12 +48,12 @@ add_executable(Chess main.cpp
         src/moveGenerator.h
         src/piece.cpp
         src/piece.h
-        src/precomputedGameData.cpp
-        src/precomputedGameData.h
-        src/utils.cpp
-        src/utils.h
-        src/zobrist.cpp
-        src/zobrist.h
+        src/util/precomputedGameData.cpp
+        src/util/precomputedGameData.h
+        src/util/utils.cpp
+        src/util/utils.h
+        src/util/zobrist.cpp
+        src/util/zobrist.h
 )
 
 target_sources(Chess PRIVATE ${RESOURCE_FILES})

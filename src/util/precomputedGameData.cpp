@@ -1,5 +1,5 @@
 #include "precomputedGameData.h"
-#include "piece.h"
+#include "../piece.h"
 #include "utils.h"
 
 #include <iostream>

@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "zobrist.h"
-#include "piece.h"
+#include "../piece.h"
 
 std::array<std::array<uint64_t, 64>, 12> Zobrist::keys = initializeKeys();
 std::array<uint64_t, 2> Zobrist::colorKeys = initializeColorKeys();

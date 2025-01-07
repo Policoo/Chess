@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "../utils.h"
+#include "../util/utils.h"
 
 EngineWorker::EngineWorker(QObject* parent) :
     QObject(parent) {

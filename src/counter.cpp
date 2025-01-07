@@ -16,7 +16,7 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
             continue;
         }
 
-        board->makeMove(move);
+        board->makeMove(move, true);
         const int movePositions = countPositions(*board, depth - 1);
         board->undoMove(move);
 
@@ -40,7 +40,7 @@ int Counter::countPositions(Board& board, const int depth) {
 
     int numPositions = 0;
     for (const Move& move: moves) {
-        board.makeMove(move);
+        board.makeMove(move, true);
         const int movePositions = countPositions(board, depth - 1);
         board.undoMove(move);
 

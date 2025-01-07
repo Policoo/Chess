@@ -20,8 +20,9 @@ public:
      * Makes a move on the board.
      *
      * @param move - Move you want to make
+     * @param skipGameOverCheck - Optional parameter, default = false
      */
-    void makeMove(const Move &move);
+    void makeMove(const Move &move, bool skipGameOverCheck = false);
 
     /**
      * Undoes a move on the board by moving the pieces back and restoring past game state variables.
@@ -199,7 +200,7 @@ private:
      * Updates variables that keeps track of game state, namely colorToMove, positionHistory, currentMove,
      * enPassant. Also keeps the hash up to date.
      */
-    void updateGameState(const int start, const int end);
+    void updateGameState(const int start, const int end, bool skipGameOverCheck);
 
     /**
      * Reverts variables that keep track of the game state to the last move state.

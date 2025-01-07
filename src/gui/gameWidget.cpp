@@ -12,7 +12,7 @@
 
 #include "../moveGenerator.h"
 #include "../piece.h"
-#include "../utils.h"
+#include "../util/utils.h"
 
 // <--> INITIALIZATION AND COLORING <--> //
 

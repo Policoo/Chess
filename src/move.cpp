@@ -1,6 +1,6 @@
 #include "move.h"
 #include "piece.h"
-#include "utils.h"
+#include "util/utils.h"
 
 Move::Move(const int start, const int end, const Flag flag, const int promotion) :
     start_(start),

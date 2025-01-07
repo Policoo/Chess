@@ -2,9 +2,9 @@
 
 #include "moveGenerator.h"
 #include "piece.h"
-#include "precomputedGameData.h"
-#include "utils.h"
-#include "zobrist.h"
+#include "util/precomputedGameData.h"
+#include "util/utils.h"
+#include "util/zobrist.h"
 
 #include <iostream>
 
@@ -258,7 +258,7 @@ void Board::hashPosition() {
 
 // <--> MAKING MOVES <--> //
 
-void Board::makeMove(const Move& move) {
+void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
     const int start = move.start();
     const int end = move.end();
     const Flag flag = move.flag();
@@ -293,7 +293,7 @@ void Board::makeMove(const Move& move) {
 
     switch (flag) {
         case Flag::NONE: {
-            updateGameState(start, end);
+            updateGameState(start, end, skipGameOverCheck);
             if (isPawn(end)) {
                 lastCaptOrPawnAdv = currentMove;
             }
@@ -320,7 +320,7 @@ void Board::makeMove(const Move& move) {
             hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[rookEnd]), rookEnd);
 
             updateAttackedTiles(rookEnd, rookStart);
-            updateGameState(start, end);
+            updateGameState(start, end, skipGameOverCheck);
             return;
         }
         case Flag::EN_PASSANT: {
@@ -331,7 +331,7 @@ void Board::makeMove(const Move& move) {
             tile[enPassant] = 0;
 
             lastCaptOrPawnAdv = currentMove;
-            updateGameState(start, end);
+            updateGameState(start, end, skipGameOverCheck);
             return;
         }
         case Flag::PROMOTION: {
@@ -347,12 +347,12 @@ void Board::makeMove(const Move& move) {
             remainingPieces[tile[end]]++;
 
             lastCaptOrPawnAdv = currentMove;
-            updateGameState(start, end);
+            updateGameState(start, end, skipGameOverCheck);
         }
     }
 }
 
-void Board::updateGameState(const int start, const int end) {
+void Board::updateGameState(const int start, const int end, const bool skipGameOverCheck) {
     updateAttackedTiles(start, end);
     updatePins();
 
@@ -420,7 +420,7 @@ void Board::updateGameState(const int start, const int end) {
 
     currentMove++;
     determineCheckLine();
-    checkGameOver();
+    if (!skipGameOverCheck) checkGameOver();
 }
 
 void Board::undoMove(const Move& move) {
@@ -1013,6 +1013,7 @@ std::string Board::debugString() {
     obj += "Last capture or pawn advancement: " + std::to_string(lastCaptOrPawnAdv) + "\n";
     obj += "Castle rights: " + bitString(castleRights).substr(bitString(castleRights).length() - 5) + "\n";
     obj += "Hash: " + std::to_string(hash) + "\n";
+    obj += "Game over: " + std::to_string(gameOver) + "\n";
 
     obj += "Piece positions:\n";
     for (int i = 0; i < 2; i++) {
