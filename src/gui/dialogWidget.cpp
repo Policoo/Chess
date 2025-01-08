@@ -48,8 +48,8 @@ DialogWidget::DialogWidget(QWidget* parent) :
     layout = new QVBoxLayout(scrollWidget);
     layout->setAlignment(Qt::AlignTop);
 
-    vLayout->addWidget(scrollArea);
     scrollArea->setWidget(scrollWidget);
+    vLayout->addWidget(scrollArea);
 
     QScrollBar* scrollBar = scrollArea->verticalScrollBar();
     scrollBar->setStyleSheet(
@@ -78,7 +78,9 @@ void DialogWidget::displayDebugString(const std::string& debugString) {
     auto* messageLabel = new QLabel(QString::fromStdString(debugString));
     messageLabel->setFixedWidth(270);
     messageLabel->setWordWrap(true);
-    messageLabel->setStyleSheet("color: white;"
+    messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
+    messageLabel->setStyleSheet(
+            "color: white;"
             "padding: 3px;"
             "font-size: 9pt;"
             );

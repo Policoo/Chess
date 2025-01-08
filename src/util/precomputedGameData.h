@@ -12,25 +12,25 @@
 class PGD {
 public:
     /**
-     * @param direction - Direction the piece is/would be going in.
-     * @param index - Board index
+     * @param direction Direction the piece is/would be going in.
+     * @param index Board index
      * @return How many squares you can go in a direction from the given index, until you reach the
      * edge of the board.
     */
-    static const int& getEdgeOfBoard(const int direction, const int index);
+    static const int& getEdgeOfBoard(int direction, int index);
 
     /**
-     * @param piece - The piece you want the directions for.
+     * @param piece The piece you want the directions for.
      * @return A vector containing all the directions the piece can go in.
     */
-    const static std::vector<int>& getPieceDirections(const int piece);
+    const static std::vector<int>& getPieceDirections(int piece);
 
     /**
-     * @param piece - Piece to get the attack map for.
-     * @param piecePosition - Position index of the piece on the board.
-     * @return A bitboard representing what squares the piece can attack from it's position.
+     * @param piece Piece to get the attack map for.
+     * @param piecePosition Position index of the piece on the board.
+     * @return A bitboard representing what squares the piece can attack from its position.
     */
-    static const uint64_t& getAttackMap(const int piece, const int piecePosition);
+    static const uint64_t& getAttackMap(int piece, int piecePosition);
 
 private:
     /**

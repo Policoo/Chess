@@ -124,8 +124,8 @@ std::vector<Move> MoveGenerator::generatePawnMoves(Board& board, int index) {
         }
 
         // if we get here, en passant is possible on the board, so check if this pawn can take it
-        if (const int enPassantCapt = board.getEnPassant() + dir[0];
-            enPassantCapt == index + dir[side] && board.isLegalMove(index, index + dir[side])) {
+        const int enPassantCapt = board.getEnPassant() + dir[0];
+        if (enPassantCapt == index + dir[side] && board.isLegalMove(index, index + dir[side], true)) {
             moves.emplace_back(index, index + dir[side], Flag::EN_PASSANT, 0);
         }
     }

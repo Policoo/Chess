@@ -420,7 +420,8 @@ void Board::updateGameState(const int start, const int end, const bool skipGameO
 
     currentMove++;
     determineCheckLine();
-    if (!skipGameOverCheck) checkGameOver();
+    if (!skipGameOverCheck)
+        checkGameOver();
 }
 
 void Board::undoMove(const Move& move) {
@@ -829,10 +830,72 @@ bool Board::isLegalMove(const int start, const int end, const bool isEnPassant) 
 
     //if we are in check, make sure to either block it or capture the piece checking the king
     if (check != 0LL) {
-
-
         //if we are either capturing the piece checking us or moving in front of the check, it's legal
         return (check & (1LL << end)) != 0;
+    }
+
+    //this is to cover en passant "pins", so if we are on the same row as the king, check if we are pinned
+    if (isEnPassant && (start / 8 == this->kingPositions[turn] / 8)) {
+        //TODO: Make this prettier cause jesus christ what the fuck is this, maybe separate function?
+        bool foundRook = false;
+
+        for (const int direction: { 1, -1 }) {
+            bool expectingPawn = direction * (enPassant - start) > 0;
+
+            //this will be true if we are moving in the direction of the king
+            if (direction * (this->kingPositions[turn] - enPassant) > 0) {
+                const int numSteps = PGD::getEdgeOfBoard(direction, start);
+
+                for (int index = start + direction; (index <= start + numSteps && index != this->kingPositions[turn]); index = index + direction) {
+                    if (Piece::type(tile[index]) == Piece::PAWN && Piece::color(tile[index]) == otherTurn) {
+                        if (expectingPawn) {
+                            expectingPawn = false;
+                            continue;
+                        }
+
+                        //we are not expecting a pawn, meaning there is something that would block a "pin"
+                        return true;
+                    }
+
+                    //we are searching in the direction of the king, so if we find anything other than the enemy
+                    //pawn, an en passant pin is not possible
+                    if (tile[index] != 0) {
+                        return true;
+                    }
+                }
+            } else {
+                const int numSteps = PGD::getEdgeOfBoard(direction, start);
+
+                for (int index = start + direction; index <= start + numSteps; index = index + direction) {
+                    if (Piece::type(tile[index]) == Piece::PAWN && Piece::color(tile[index]) == otherTurn) {
+                        if (expectingPawn) {
+                            expectingPawn = false;
+                            continue;
+                        }
+
+                        //we are not expecting a pawn, meaning there is something that would block a "pin"
+                        return true;
+                    }
+
+                    if ((Piece::type(tile[index]) == Piece::ROOK || Piece::type(tile[index]) == Piece::QUEEN) && Piece::color(tile[index]) == otherTurn) {
+                        foundRook = true;
+                        break;
+                    }
+
+                    //we are searching in the direction of the rook, so if we find anything other than the enemy
+                    //pawn, rook or queen, an en passant pin is not possible
+                    if (tile[index] != 0) {
+                        return true;
+                    }
+                }
+            }
+
+            //if we get here, and we haven't returned true yet, that means that the rook could directly see
+            //the king if it wasn't for our pawns, so if we found a rook, en passant is "pinned"
+            if (foundRook) {
+                return false;
+            }
+        }
     }
 
     //if we get here, the piece isn't pinned, and it's not a check, so it's free to move
