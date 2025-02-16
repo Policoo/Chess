@@ -3,10 +3,8 @@
 #include "counter.h"
 #include "move.h"
 
-std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenString, int depth) {
-    const auto board = new Board(fenString);
-
-    const std::vector<Move> moves = MoveGenerator::generateMoves(*board);
+std::unordered_map<std::string, int> Counter::goPerft(Board& board, int depth) {
+    const std::vector<Move> moves = MoveGenerator::generateMoves(board);
 
     int numPositions = 0;
     for (const Move& move: moves) {
@@ -16,9 +14,9 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
             continue;
         }
 
-        board->makeMove(move, true);
-        const int movePositions = countPositions(*board, depth - 1);
-        board->undoMove(move);
+        board.makeMove(move, true);
+        const int movePositions = countPositions(board, depth - 1);
+        board.undoMove(move);
 
         results[move.toString()] = movePositions;
         numPositions += movePositions;
@@ -26,7 +24,6 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
 
     results["Nodes searched"] = numPositions;
 
-    delete board;
     return results;
 }
 

@@ -8,11 +8,10 @@
 
 DialogWidget::DialogWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(300, 552);
-
     auto* widget = new QWidget(this);
     widget->setStyleSheet("background-color: black;");
-    widget->setFixedSize(300, 552);
+    widget->resize(300, 552);
+    widget->setMinimumSize(300, 552);
 
     auto* vLayout = new QVBoxLayout(widget);
     vLayout->setSpacing(1);
@@ -20,7 +19,8 @@ DialogWidget::DialogWidget(QWidget* parent) :
     vLayout->setAlignment(Qt::AlignTop);
 
     auto* desc = new QWidget(widget);
-    desc->setFixedSize(300, 35);
+    desc->resize(300, 35);
+    desc->setMinimumSize(300, 35);
     desc->setStyleSheet("background-color: #3d3d3d;");
 
     auto* descLayout = new QVBoxLayout(desc);

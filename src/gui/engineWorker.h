@@ -19,7 +19,7 @@ public:
     void setEngine(std::string engine);
 
 public slots:
-    void goPerft(Board& board, int depth);
+    void goPerft(Board board, int depth);
 
 signals:
     void perftDone(std::vector<std::string> counterResults);

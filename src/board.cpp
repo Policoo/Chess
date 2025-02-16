@@ -163,7 +163,7 @@ void Board::makeBoardFromFen(const std::string& fenString) {
     //en passant
     fenIndex += 1;
     if (fenString[fenIndex] != '-') {
-        int enPassantCoord = getIndexFromChessCoordinates(fenString[fenIndex], fenString[fenIndex + 1]);
+        const int enPassantCoord = getIndexFromChessCoordinates(fenString[fenIndex], fenString[fenIndex + 1]);
         enPassant = (turn == Piece::WHITE) ? enPassantCoord + 8 : enPassantCoord - 8;
         fenIndex += 3;
     }
@@ -319,7 +319,7 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
             piecePositions[Piece::color(tile[rookEnd])][Piece::index(tile[rookEnd])] = rookEnd;
             hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[rookEnd]), rookEnd);
 
-            updateAttackedTiles(rookEnd, rookStart);
+            updateAttackedTiles(rookStart, rookEnd, false);
             updateGameState(start, end, skipGameOverCheck);
             return;
         }
@@ -331,7 +331,7 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
             tile[enPassant] = 0;
 
             lastCaptOrPawnAdv = currentMove;
-            updateGameState(start, end, skipGameOverCheck);
+            updateGameState(start, end, skipGameOverCheck, true);
             return;
         }
         case Flag::PROMOTION: {
@@ -352,8 +352,8 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
     }
 }
 
-void Board::updateGameState(const int start, const int end, const bool skipGameOverCheck) {
-    updateAttackedTiles(start, end);
+void Board::updateGameState(const int start, const int end, const bool skipGameOverCheck, const bool isEnPassant) {
+    updateAttackedTiles(start, end, isEnPassant);
     updatePins();
 
     if (isKing(end)) {
@@ -483,7 +483,7 @@ void Board::undoMove(const Move& move) {
             piecePositions[Piece::color(tile[rookStart])][Piece::index(tile[rookStart])] = rookStart;
             hash ^= Zobrist::getKey(tile[rookStart], rookStart);
 
-            updateAttackedTiles(rookStart, rookEnd);
+            updateAttackedTiles(rookEnd, rookStart, false);
             revertGameStats(start, end, state);
             return;
         }
@@ -501,7 +501,7 @@ void Board::undoMove(const Move& move) {
             remainingPieces[Piece::ignoreIndex(tile[pastEnPassant])]++;
 
             hash ^= Zobrist::getKey(tile[pastEnPassant], pastEnPassant);
-            revertGameStats(start, end, state);
+            revertGameStats(start, end, state, true);
             return;
         }
         case Flag::PROMOTION: {
@@ -525,7 +525,7 @@ void Board::undoMove(const Move& move) {
     }
 }
 
-void Board::revertGameStats(const int start, const int end, const Board::BoardState& state) {
+void Board::revertGameStats(const int start, const int end, const BoardState& state, const bool isEnPassant) {
     if (isKing(start)) {
         kingPositions[Piece::color(tile[start])] = start;
     }
@@ -558,7 +558,7 @@ void Board::revertGameStats(const int start, const int end, const Board::BoardSt
 
     gameOver = false;
     currentMove--;
-    updateAttackedTiles(end, start);
+    updateAttackedTiles(end, start, isEnPassant);
     updatePins();
     determineCheckLine();
 }
@@ -567,7 +567,7 @@ void Board::revertGameStats(const int start, const int end, const Board::BoardSt
 
 // <--> KEEPING TRACK OF ATTACKED TILES, PINS AND CHECKS <--> //
 
-void Board::updateAttackedTiles(const int oldIndex, const int newIndex) {
+void Board::updateAttackedTiles(const int oldIndex, const int newIndex, const bool isEnPassant) {
     int colors[] = { Piece::WHITE, Piece::BLACK };
     const int pieceIndex = Piece::index(tile[newIndex]);
 
@@ -579,19 +579,19 @@ void Board::updateAttackedTiles(const int oldIndex, const int newIndex) {
         std::vector<uint64_t>& attackedTilesColor = attackedTiles[color];
         uint64_t attackMapBitboard = 0LL;
 
-
         for (int i = 0; i < attackedTilesColor.size(); i++) {
             //no point in looking at the moved piece, we already calculated it's attacked tiles
-            if (i == pieceIndex) {
+            if (i == pieceIndex && color == turn) {
                 attackMapBitboard |= attackedTilesColor[i];
                 continue;
             }
 
             const int piecePosition = piecePositionsColor[i];
-            const uint64_t moveBitboard = (1LL << oldIndex) | (1LL << newIndex);
+            const uint64_t moveBitboard = (1LL << oldIndex) | (1LL << newIndex) | (1LL << (enPassant * isEnPassant));
+            const uint64_t interferenceBitboard = (1LL << attackedTilesColor[i]) | (1LL << piecePositionsColor[i]);
 
             //if the move intersected with the piece attacked tiles, and the piece is on the board
-            if ((attackedTilesColor[i] & moveBitboard) != 0 && piecePosition != -1) {
+            if ((interferenceBitboard & moveBitboard) != 0 && piecePosition != -1) {
                 attackedTilesColor[i] = calculateAttackedTiles(piecePosition);
             }
 
@@ -988,9 +988,13 @@ std::string Board::positionToFen() {
         //count empty tiles
         if (tile[index] == 0) {
             emptyRowCount++;
-            if ((index + 1) % 8 == 0 && index / 8 != 7) {
-                fen += std::to_string(emptyRowCount) + "/";
-                emptyRowCount = 0;
+            if ((index + 1) % 8 == 0) {
+                fen += std::to_string(emptyRowCount);
+
+                if (index / 8 != 7) {
+                    fen += "/";
+                    emptyRowCount = 0;
+                }
             }
 
             continue;

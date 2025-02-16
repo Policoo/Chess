@@ -13,13 +13,12 @@
 #include "../moveGenerator.h"
 #include "../piece.h"
 #include "../util/utils.h"
+#include "boardWidget.h"
 
 // <--> INITIALIZATION AND COLORING <--> //
 
 GameWidget::GameWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(552, 552);
-
     QLayout* hLayout = new QVBoxLayout(this);
     hLayout->setSpacing(0);
     hLayout->setContentsMargins(0, 0, 0, 0);
@@ -30,20 +29,26 @@ GameWidget::GameWidget(QWidget* parent) :
     vLayout->setSpacing(0);
     vLayout->setContentsMargins(0, 0, 0, 0);
 
-    boardWidget = new QWidget(this);
-    boardWidget->setFixedSize(512, 512);
+    boardWidget = new BoardWidget(this);
+    boardWidget->resize(512, 512);
+    boardWidget->setMinimumSize(512, 512);
+    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     northWidget = new QWidget(this);
     northWidget->setStyleSheet("background-color: #363636");
+    northWidget->setMinimumSize(20, 20);
 
     eastWidget = new QWidget(this);
     eastWidget->setStyleSheet("background-color: #363636");
+    eastWidget->setMinimumSize(20, 20);
 
     southWidget = new QWidget(this);
     southWidget->setStyleSheet("background-color: #363636");
+    southWidget->setMinimumSize(20, 20);
 
     westWidget = new QWidget(this);
     westWidget->setStyleSheet("background-color: #363636");
+    westWidget->setMinimumSize(20, 20);
 
     hLayout->addWidget(northWidget);
     hLayout->addWidget(hContainer);
@@ -102,12 +107,14 @@ void GameWidget::addCoordinates() {
     hLayout->setContentsMargins(0, 0, 0, 0);
 
     auto* leftSpacer = new QLabel(southWidget);
-    leftSpacer->setFixedSize(20, 20);
+    leftSpacer->resize(20, 20);
+    leftSpacer->setMinimumSize(20, 20);
     hLayout->addWidget(leftSpacer);
 
     for (int index = 0; index < 8; index++) {
         auto* row = new QLabel(westWidget);
-        row->setFixedSize(20, 64);
+        row->resize(20, 64);
+        row->setMinimumSize(20, 64);
         row->setStyleSheet("color: white;");
         row->setText(QString::fromStdString(std::to_string(numbers[index])));
 
@@ -116,7 +123,8 @@ void GameWidget::addCoordinates() {
         vLayout->addWidget(row);
 
         auto* column = new QLabel(southWidget);
-        column->setFixedSize(64, 20);
+        column->resize(64, 20);
+        column->setMinimumSize(64, 20);
         column->setStyleSheet("color: white;");
         column->setText(QString(letters[index]));
 
@@ -126,7 +134,8 @@ void GameWidget::addCoordinates() {
     }
 
     auto* rightSpacer = new QLabel(southWidget);
-    rightSpacer->setFixedSize(20, 20);
+    rightSpacer->resize(20, 20);
+    rightSpacer->setMinimumSize(20, 20);
     hLayout->addWidget(rightSpacer);
 }
 
@@ -373,13 +382,12 @@ void GameWidget::handleClick(int index) {
 
         return;
     }
-    else {
-        //if we get here that means the user clicked on a tile that is not a move, but an opponents tile
-        resetColors();
-        highlightClick(index);
-        pieceMoves.clear();
-        lastClick = -1;
-    }
+
+    //if we get here that means the user clicked on a tile that is not a move, but an opponents tile
+    resetColors();
+    highlightClick(index);
+    pieceMoves.clear();
+    lastClick = -1;
 }
 
 void GameWidget::makeMove(Move move) {

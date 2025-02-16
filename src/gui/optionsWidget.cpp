@@ -8,10 +8,7 @@
 
 OptionsWidget::OptionsWidget(QWidget* parent) :
     QWidget(parent) {
-    auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 552);
-    widget->setStyleSheet("background-color: black;");
-    setFixedSize(300, 552);
+    setStyleSheet("background-color: black;");
 
     optionsLayout = new QVBoxLayout(this);
     optionsLayout->setSpacing(1);
@@ -30,7 +27,8 @@ OptionsWidget::OptionsWidget(QWidget* parent) :
 
 void OptionsWidget::constructTopButtons() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 40);
+    widget->resize(300, 40);
+    widget->setMinimumSize(300, 40);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QHBoxLayout(widget);
@@ -251,7 +249,8 @@ void OptionsWidget::constructPerftWidget() {
 
 void OptionsWidget::constructOpponentWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 40);
+    widget->resize(300, 40);
+    widget->setMinimumSize(300, 40);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QHBoxLayout(widget);
@@ -299,7 +298,8 @@ void OptionsWidget::constructOpponentWidget() {
 
 void OptionsWidget::constructMatchWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 90);
+    widget->resize(300, 90);
+    widget->setMinimumSize(300, 90);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QVBoxLayout(widget);
@@ -406,7 +406,8 @@ void OptionsWidget::constructMatchWidget() {
 
 void OptionsWidget::constructEvalWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 247);
+    widget->resize(300, 247);
+    widget->setMinimumSize(300, 247);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QVBoxLayout(widget);

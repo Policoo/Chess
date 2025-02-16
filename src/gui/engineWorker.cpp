@@ -8,12 +8,12 @@ EngineWorker::EngineWorker(QObject* parent) :
     QObject(parent) {
 }
 
-void EngineWorker::goPerft(Board& board, int depth) {
+void EngineWorker::goPerft(Board board, int depth) {
     std::cout << board.positionToFen() << "\n";
     std::vector<std::string> result{ "Depth: " + std::to_string(depth) };
 
     Counter counter;
-    std::unordered_map<std::string, int> counterResults = counter.goPerft(board.positionToFen(), depth);
+    std::unordered_map<std::string, int> counterResults = counter.goPerft(board, depth);
     std::unordered_map<std::string, int> fishResults = stockFishPerft(board.positionToFen(), depth);
 
     //remove all correct results from the hashmap

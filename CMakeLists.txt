@@ -54,6 +54,7 @@ add_executable(Chess main.cpp
         src/util/utils.h
         src/util/zobrist.cpp
         src/util/zobrist.h
+        src/gui/BoardWidget.h
 )
 
 target_sources(Chess PRIVATE ${RESOURCE_FILES})

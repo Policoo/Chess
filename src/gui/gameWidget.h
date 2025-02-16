@@ -43,6 +43,10 @@ signals:
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override {
+        int newSize = qMin(event->size().width(), event->size().height());
+        resize(newSize, newSize);
+    }
 
 private:
     QWidget* boardWidget;

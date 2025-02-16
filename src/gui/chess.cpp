@@ -2,21 +2,30 @@
 
 #include <QThread>
 #include <iostream>
-#include <QHBoxLayout>
+#include <QWidget>
 
 Chess::Chess(QWidget* parent) :
     QMainWindow(parent),
     debug(false) {
     mainWidget = new QWidget(this);
     mainWidget->setStyleSheet("background-color: black;");
-    mainWidget->setFixedSize(1154, 552);
+
+    mainWidget->setMinimumSize(1154, 552);
+    mainWidget->resize(1154, 552);
 
     setCentralWidget(mainWidget);
     layout = new QHBoxLayout(mainWidget);
     layout->setSpacing(1);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    optionsWidget = new OptionsWidget(this);
+    optionsWidget = new OptionsWidget(mainWidget);
+    boardWidget = new GameWidget(mainWidget);
+    dialogWidget = new DialogWidget(mainWidget);
+
+    optionsWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    dialogWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     connect(optionsWidget, &OptionsWidget::resetBoardSignal, this, &Chess::resetBoard);
     connect(optionsWidget, &OptionsWidget::debugModeSignal, this, &Chess::debugMode);
     connect(optionsWidget, &OptionsWidget::undoMoveSignal, this, &Chess::undoMove);
@@ -26,15 +35,16 @@ Chess::Chess(QWidget* parent) :
     connect(optionsWidget, &OptionsWidget::setOpponentSignal, this, &Chess::setOpponent);
     connect(optionsWidget, &OptionsWidget::startEngineMatchSignal, this, &Chess::startEngineMatch);
 
-    boardWidget = new GameWidget(this);
     connect(boardWidget, &GameWidget::moveMadeSignal, this, &Chess::moveMade);
     connect(boardWidget, &GameWidget::perftResultsReady, this, &Chess::perftResultsReady);
-
-    dialogWidget = new DialogWidget(this);
 
     layout->addWidget(optionsWidget);
     layout->addWidget(boardWidget);
     layout->addWidget(dialogWidget);
+
+    layout->setStretch(0, 10);
+    layout->setStretch(1, 18);
+    layout->setStretch(2, 10);
 }
 
 void Chess::resetBoard() {

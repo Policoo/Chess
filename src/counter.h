@@ -7,7 +7,7 @@
 
 class Counter {
 public:
-    std::unordered_map<std::string, int> goPerft(const std::string& fenString, int depth);
+    std::unordered_map<std::string, int> goPerft(Board &board, int depth);
 
 private:
     std::unordered_map<std::string, int> results;

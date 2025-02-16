@@ -200,20 +200,21 @@ private:
      * Updates variables that keeps track of game state, namely colorToMove, positionHistory, currentMove,
      * enPassant. Also keeps the hash up to date.
      */
-    void updateGameState(const int start, const int end, bool skipGameOverCheck);
+    void updateGameState(int start, int end, bool skipGameOverCheck, bool isEnPassant = false);
 
     /**
      * Reverts variables that keep track of the game state to the last move state.
      */
-    void revertGameStats(const int start, const int end, const Board::BoardState &state);
+    void revertGameStats(const int start, const int end, const Board::BoardState &state, bool isEnPassant = false);
 
     /**
      * @brief Updates the attack map for all pieces that saw the move and for the moved piece.
      *
      * @param oldIndex - Old board index of the moved piece.
      * @param newIndex - New board index of the moved piece.
+     * @param isEnPassant
     */
-    void updateAttackedTiles(const int oldIndex, const int newIndex);
+    void updateAttackedTiles(const int oldIndex, const int newIndex, bool isEnPassant);
 
     /**
      * @brief Updates the pins map with any new pins and deletes old ones.
