@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 std::string bitString(int num);
 
