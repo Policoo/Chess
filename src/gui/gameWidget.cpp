@@ -18,32 +18,38 @@
 
 GameWidget::GameWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(552, 552);
+    resize(552, 552);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    QLayout* hLayout = new QVBoxLayout(this);
+    QVBoxLayout* hLayout = new QVBoxLayout(this);
     hLayout->setSpacing(0);
     hLayout->setContentsMargins(0, 0, 0, 0);
 
     auto* hContainer = new QWidget(this);
 
-    QLayout* vLayout = new QHBoxLayout(hContainer);
+    QHBoxLayout* vLayout = new QHBoxLayout(hContainer);
     vLayout->setSpacing(0);
     vLayout->setContentsMargins(0, 0, 0, 0);
 
     boardWidget = new QWidget(this);
-    boardWidget->setFixedSize(512, 512);
+    boardWidget->resize(512, 512);
+    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     northWidget = new QWidget(this);
     northWidget->setStyleSheet("background-color: #363636");
+    northWidget->setFixedHeight(20);
 
     eastWidget = new QWidget(this);
     eastWidget->setStyleSheet("background-color: #363636");
+    eastWidget->setFixedWidth(20);
 
     southWidget = new QWidget(this);
     southWidget->setStyleSheet("background-color: #363636");
+    southWidget->setFixedHeight(20);
 
     westWidget = new QWidget(this);
     westWidget->setStyleSheet("background-color: #363636");
+    westWidget->setFixedWidth(20);
 
     hLayout->addWidget(northWidget);
     hLayout->addWidget(hContainer);

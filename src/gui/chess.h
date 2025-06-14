@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
+#include <qboxlayout.h>
 #include <vector>
 #include <string>
 
@@ -37,7 +38,7 @@ public slots:
 
 private:
     QWidget *mainWidget;
-    QLayout *layout;
+    QHBoxLayout *layout;
 
     OptionsWidget *optionsWidget;
     GameWidget *boardWidget;

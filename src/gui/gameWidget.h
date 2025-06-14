@@ -33,6 +33,27 @@ public:
 
     std::string getPerspective();
 
+void resizeEvent(QResizeEvent* ev) override {
+    QWidget::resizeEvent(ev);
+
+    // figure out how much space gutters eat up:
+    int gutterW = westWidget->width() + eastWidget->width();
+    int gutterH = northWidget->height() + southWidget->height();
+
+    // remaining space
+    int availW = width()  - gutterW;
+    int availH = height() - gutterH;
+
+    // square side is the smaller of the two
+    int side = qMin(availW, availH);
+
+    // position the board in the middle:
+    int x = (width()  - side) / 2;
+    int y = (height() - side) / 2;
+
+    boardWidget->setGeometry(x, y, side, side);
+}
+
 public slots:
     void perftDone(std::vector<std::string> results);
 

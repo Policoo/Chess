@@ -9,7 +9,8 @@ Chess::Chess(QWidget* parent) :
     debug(false) {
     mainWidget = new QWidget(this);
     mainWidget->setStyleSheet("background-color: black;");
-    mainWidget->setFixedSize(1154, 552);
+    mainWidget->resize(1154, 552);
+    mainWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     setCentralWidget(mainWidget);
     layout = new QHBoxLayout(mainWidget);
@@ -35,6 +36,10 @@ Chess::Chess(QWidget* parent) :
     layout->addWidget(optionsWidget);
     layout->addWidget(boardWidget);
     layout->addWidget(dialogWidget);
+
+    layout->setStretchFactor(optionsWidget, 0);
+    layout->setStretchFactor(boardWidget, 1);
+    layout->setStretchFactor(dialogWidget, 0);
 }
 
 void Chess::resetBoard() {
