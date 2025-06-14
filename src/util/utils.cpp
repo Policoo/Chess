@@ -73,17 +73,25 @@ std::unordered_map<std::string, int> parsePerftResults(const std::string& result
 
 std::unordered_map<std::string, int> stockFishPerft(const std::string& fenString, int depth) {
     // Set the path to your Stockfish executable
-    QDir dir(QCoreApplication::applicationDirPath());;
+    QDir dir(QCoreApplication::applicationDirPath());
 
     // Go up to Chess/bin
     dir.cdUp();
     // Go up to Chess/
     dir.cdUp();
-    // Now go into resources/stockfish
+    // Now go into resources
     dir.cd("resources");
-    dir.cd("stockfish");
 
-    QString stockfishPath = dir.absoluteFilePath("stockfish-windows-x86-64-avx2.exe");
+    QString stockfishPath;
+    
+    // Detect operating system and set appropriate Stockfish path
+#ifdef Q_OS_WIN
+    dir.cd("stockfish_windows");
+    stockfishPath = dir.absoluteFilePath("stockfish-windows-x86-64-avx2.exe");
+#elif defined(Q_OS_MAC)
+    dir.cd("stockfish_mac");
+    stockfishPath = dir.absoluteFilePath("stockfish-macos-m1-apple-silicon");
+#endif
 
     std::unordered_map<std::string, int> results;
 
