@@ -91,6 +91,9 @@ std::unordered_map<std::string, int> stockFishPerft(const std::string& fenString
 #elif defined(Q_OS_MAC)
     dir.cd("stockfish_mac");
     stockfishPath = dir.absoluteFilePath("stockfish-macos-m1-apple-silicon");
+#elif defined(Q_OS_LINUX)
+    dir.cd("stockfish_linux");
+    stockfishPath = dir.absoluteFilePath("stockfish-ubuntu-x86-64-avx2");
 #endif
 
     std::unordered_map<std::string, int> results;
