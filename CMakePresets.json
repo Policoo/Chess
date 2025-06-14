@@ -61,6 +61,38 @@
         "CMAKE_EXE_LINKER_FLAGS": "-flto",
         "CMAKE_SHARED_LINKER_FLAGS": "-flto"
       }
+    },
+    {
+        "name": "debug-gcc",
+        "displayName": "Debug (GCC)",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/bin/Debug-GCC/intermediate",
+        "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -Wall -Wextra"
+        }
+    },
+    {
+        "name": "release-gcc",
+        "displayName": "Release (GCC)",
+        "generator": "Ninja",
+        "binaryDir": "${sourceDir}/bin/Release-GCC/intermediate",
+        "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto",
+        "CMAKE_EXE_LINKER_FLAGS": "-flto",
+        "CMAKE_SHARED_LINKER_FLAGS": "-flto"
+        }
     }
   ],
   "buildPresets": [
@@ -83,6 +115,16 @@
       "name": "release-clang",
       "displayName": "Release Build (Clang++)",
       "configurePreset": "release-clang"
+    },
+    {
+        "name": "debug-gcc",
+        "displayName": "Debug Build (GCC)",
+        "configurePreset": "debug-gcc"
+    },
+    {
+        "name": "release-gcc",
+        "displayName": "Release Build (GCC)",
+        "configurePreset": "release-gcc"
     }
   ]
 }
