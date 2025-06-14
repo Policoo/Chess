@@ -1,0 +1,98 @@
+[
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data -o CMakeFiles/Chess.dir/Chess_autogen/mocs_compilation.cpp.o -c /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/mocs_compilation.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/mocs_compilation.cpp",
+  "output": "CMakeFiles/Chess.dir/Chess_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/main.cpp.o.modmap -o CMakeFiles/Chess.dir/main.cpp.o -c /home/paul/Projects/Personal/Chess/main.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/main.cpp",
+  "output": "CMakeFiles/Chess.dir/main.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/gui/chess.cpp.o.modmap -o CMakeFiles/Chess.dir/src/gui/chess.cpp.o -c /home/paul/Projects/Personal/Chess/src/gui/chess.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/gui/chess.cpp",
+  "output": "CMakeFiles/Chess.dir/src/gui/chess.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/gui/dialogWidget.cpp.o.modmap -o CMakeFiles/Chess.dir/src/gui/dialogWidget.cpp.o -c /home/paul/Projects/Personal/Chess/src/gui/dialogWidget.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/gui/dialogWidget.cpp",
+  "output": "CMakeFiles/Chess.dir/src/gui/dialogWidget.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/gui/engineWorker.cpp.o.modmap -o CMakeFiles/Chess.dir/src/gui/engineWorker.cpp.o -c /home/paul/Projects/Personal/Chess/src/gui/engineWorker.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/gui/engineWorker.cpp",
+  "output": "CMakeFiles/Chess.dir/src/gui/engineWorker.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/gui/gameWidget.cpp.o.modmap -o CMakeFiles/Chess.dir/src/gui/gameWidget.cpp.o -c /home/paul/Projects/Personal/Chess/src/gui/gameWidget.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/gui/gameWidget.cpp",
+  "output": "CMakeFiles/Chess.dir/src/gui/gameWidget.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/gui/optionsWidget.cpp.o.modmap -o CMakeFiles/Chess.dir/src/gui/optionsWidget.cpp.o -c /home/paul/Projects/Personal/Chess/src/gui/optionsWidget.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/gui/optionsWidget.cpp",
+  "output": "CMakeFiles/Chess.dir/src/gui/optionsWidget.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/board.cpp.o.modmap -o CMakeFiles/Chess.dir/src/board.cpp.o -c /home/paul/Projects/Personal/Chess/src/board.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/board.cpp",
+  "output": "CMakeFiles/Chess.dir/src/board.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/counter.cpp.o.modmap -o CMakeFiles/Chess.dir/src/counter.cpp.o -c /home/paul/Projects/Personal/Chess/src/counter.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/counter.cpp",
+  "output": "CMakeFiles/Chess.dir/src/counter.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/move.cpp.o.modmap -o CMakeFiles/Chess.dir/src/move.cpp.o -c /home/paul/Projects/Personal/Chess/src/move.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/move.cpp",
+  "output": "CMakeFiles/Chess.dir/src/move.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/moveGenerator.cpp.o.modmap -o CMakeFiles/Chess.dir/src/moveGenerator.cpp.o -c /home/paul/Projects/Personal/Chess/src/moveGenerator.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/moveGenerator.cpp",
+  "output": "CMakeFiles/Chess.dir/src/moveGenerator.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/piece.cpp.o.modmap -o CMakeFiles/Chess.dir/src/piece.cpp.o -c /home/paul/Projects/Personal/Chess/src/piece.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/piece.cpp",
+  "output": "CMakeFiles/Chess.dir/src/piece.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/util/precomputedGameData.cpp.o.modmap -o CMakeFiles/Chess.dir/src/util/precomputedGameData.cpp.o -c /home/paul/Projects/Personal/Chess/src/util/precomputedGameData.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/util/precomputedGameData.cpp",
+  "output": "CMakeFiles/Chess.dir/src/util/precomputedGameData.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/util/utils.cpp.o.modmap -o CMakeFiles/Chess.dir/src/util/utils.cpp.o -c /home/paul/Projects/Personal/Chess/src/util/utils.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/util/utils.cpp",
+  "output": "CMakeFiles/Chess.dir/src/util/utils.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/src/util/zobrist.cpp.o.modmap -o CMakeFiles/Chess.dir/src/util/zobrist.cpp.o -c /home/paul/Projects/Personal/Chess/src/util/zobrist.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/src/util/zobrist.cpp",
+  "output": "CMakeFiles/Chess.dir/src/util/zobrist.cpp.o"
+},
+{
+  "directory": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate",
+  "command": "/usr/bin/clang++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_WIDGETS_LIB -isystem /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/Chess_autogen/include -isystem /usr/include/qt6/QtCore -isystem /usr/include/qt6 -isystem /usr/lib/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtWidgets -g -O0 -Wall -Wextra -std=gnu++20 -fno-direct-access-external-data @CMakeFiles/Chess.dir/qrc_resources.cpp.o.modmap -o CMakeFiles/Chess.dir/qrc_resources.cpp.o -c /home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/qrc_resources.cpp",
+  "file": "/home/paul/Projects/Personal/Chess/bin/Debug-Clang/intermediate/qrc_resources.cpp",
+  "output": "CMakeFiles/Chess.dir/qrc_resources.cpp.o"
+}
+]
