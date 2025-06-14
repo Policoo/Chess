@@ -61,6 +61,10 @@ void EngineWorker::goPerft(Board& board, int depth) {
     if (!fishResults.empty()) {
         std::string movesNotFound = "Moves not found: ";
         for (const auto& fishPair: fishResults) {
+            if (fishPair.first.find("info") != std::string::npos) {
+                continue; // Skip info lines
+            }
+
             movesNotFound += fishPair.first + ", ";
         }
         result.push_back(movesNotFound);
