@@ -45,6 +45,7 @@ add_executable(Chess
     src/gui/engineWorker.cpp src/gui/engineWorker.h
     src/gui/gameWidget.cpp   src/gui/gameWidget.h
     src/gui/optionsWidget.cpp src/gui/optionsWidget.h
+    src/gui/squareGridLayout.h
 
     # Game‑logic
     src/board.cpp

@@ -2,17 +2,14 @@
 #include <QThread>
 #include <QVBoxLayout>
 #include <QDir>
+#include <qwidget.h>
 
-#include <iostream>
-#include <memory>
-
-#include "dialogWidget.h"
 #include "gameWidget.h"
 #include "engineWorker.h"
+#include "squareGridLayout.h"
 
 #include "../moveGenerator.h"
 #include "../piece.h"
-#include "../util/utils.h"
 
 // <--> INITIALIZATION AND COLORING <--> //
 
@@ -33,7 +30,6 @@ GameWidget::GameWidget(QWidget* parent) :
 
     boardWidget = new QWidget(this);
     boardWidget->resize(512, 512);
-    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     northWidget = new QWidget(this);
     northWidget->setStyleSheet("background-color: #363636");
@@ -65,10 +61,50 @@ GameWidget::GameWidget(QWidget* parent) :
     lastClick = -1;
 }
 
+void GameWidget::resizeEvent(QResizeEvent* ev)
+{
+    QWidget::resizeEvent(ev);
+
+    int W = width();
+    int H = height();
+
+    // side of the chessboard
+    int side = qMin(W, H);
+
+    // extra space
+    int extraW = W - side;
+    int extraH = H - side;
+
+    // panels split the extra
+    int leftW   = extraW / 2;
+    int rightW  = extraW - leftW;
+    int topH    = extraH / 2;
+    int bottomH = extraH - topH;
+
+    // position north
+    northWidget->setGeometry(0, 0, W, topH);
+    // position south
+    southWidget->setGeometry(0, topH + side, W, bottomH);
+
+    // position west
+    westWidget->setGeometry(0, topH, leftW, side);
+    // position east
+    eastWidget->setGeometry(leftW + side, topH, rightW, side);
+
+    // position board
+    boardWidget->setGeometry(leftW, topH, side, side);
+}
+
 void GameWidget::constructBoard() {
-    auto* gridLayout = new QGridLayout(boardWidget);
+    auto* gridLayout = new SquareGridLayout(boardWidget);
+    gridLayout->setAlignment(Qt::AlignCenter);
     gridLayout->setSpacing(0);
     gridLayout->setContentsMargins(0, 0, 0, 0);
+
+    for (int i = 0; i < 8; ++i) {
+        gridLayout->setRowStretch(i, 1);
+        gridLayout->setColumnStretch(i, 1);
+    }
 
     tile.resize(64);
     for (int index = 0; index < 64; index++) {
