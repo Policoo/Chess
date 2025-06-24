@@ -8,11 +8,11 @@
 
 DialogWidget::DialogWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(300, 552);
+    resize(300, 552);
 
     auto* widget = new QWidget(this);
     widget->setStyleSheet("background-color: black;");
-    widget->setFixedSize(300, 552);
+    widget->resize(300, 552);
 
     auto* vLayout = new QVBoxLayout(widget);
     vLayout->setSpacing(1);

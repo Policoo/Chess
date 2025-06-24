@@ -180,7 +180,7 @@ void GameWidget::initializePieceImages() {
         for (int x = 0; x < fullImage.width(); x += 200) {
             QImage piece = fullImage.copy(x, y, 200, 200);
             pieceImages.push_back(
-                    QPixmap::fromImage(piece).scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+                QPixmap::fromImage(piece).scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
 }

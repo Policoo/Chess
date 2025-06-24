@@ -38,7 +38,7 @@ Chess::Chess(QWidget* parent) :
     layout->addWidget(dialogWidget);
 
     layout->setStretchFactor(optionsWidget, 0);
-    layout->setStretchFactor(boardWidget, 1);
+    layout->setStretchFactor(boardWidget, 0);
     layout->setStretchFactor(dialogWidget, 0);
 }
 

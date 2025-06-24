@@ -9,9 +9,9 @@
 OptionsWidget::OptionsWidget(QWidget* parent) :
     QWidget(parent) {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 552);
+    widget->resize(300, 552);
     widget->setStyleSheet("background-color: black;");
-    setFixedSize(300, 552);
+    resize(300, 552);
 
     optionsLayout = new QVBoxLayout(this);
     optionsLayout->setSpacing(1);
