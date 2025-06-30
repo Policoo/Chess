@@ -50,6 +50,14 @@ int getIndexFromChessCoordinates(char column, char row) {
     return y + x;
 }
 
+std::string trim(const std::string& s) {
+    size_t start = s.find_first_not_of(" \t\r\n");
+    size_t end = s.find_last_not_of(" \t\r\n");
+    if (start == std::string::npos)
+        return "";
+    return s.substr(start, end - start + 1);
+}
+
 // <--> FOR TALKING TO STOCKFISH <--> //
 
 std::unordered_map<std::string, int> parsePerftResults(const std::string& results) {
@@ -62,8 +70,9 @@ std::unordered_map<std::string, int> parsePerftResults(const std::string& result
     while (std::getline(iss, line) && !line.empty()) {
         size_t pos = line.find(':');
         if (pos != std::string::npos) {
-            std::string move = line.substr(0, pos);
-            int count = std::stoi(line.substr(pos + 1));
+            std::string move = trim(line.substr(0, pos));
+            std::string countStr = trim(line.substr(pos + 1));
+            int count = std::stoi(countStr);
             result[move] = count;
         }
     }
@@ -114,26 +123,16 @@ std::unordered_map<std::string, int> stockFishPerft(const std::string& fenString
     stockfishProcess.write(command.toUtf8());
     stockfishProcess.waitForBytesWritten();
 
-    // Wait for Stockfish to process the command
-    if (!stockfishProcess.waitForReadyRead()) {
+    // Close the write channel and wait for Stockfish to finish
+    stockfishProcess.closeWriteChannel();
+    if (!stockfishProcess.waitForFinished()) {
         std::cout << "Error waiting for Stockfish to process command" << std::endl;
         return results;
     }
 
-    // Read and display the output from Stockfish
-    std::string fishOutput;
-    while (stockfishProcess.waitForReadyRead()) {
-        QByteArray output = stockfishProcess.readAllStandardOutput();
-        fishOutput += output.toStdString();
-
-        if (output.contains("Nodes")) {
-            break;
-        }
-    }
-
-    // Close the Stockfish process
-    stockfishProcess.closeWriteChannel();
-    stockfishProcess.waitForFinished();
+    // Read the entire output from Stockfish
+    QByteArray output = stockfishProcess.readAllStandardOutput();
+    std::string fishOutput = output.toStdString();
 
     return parsePerftResults(fishOutput);
 }
