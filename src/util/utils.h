@@ -12,6 +12,8 @@ std::string getChessCoords(int index);
 
 int getIndexFromChessCoordinates(char column, char row);
 
+std::string trim(const std::string& s);
+
 std::unordered_map<std::string, int> parsePerftResults(const std::string& results);
 
 std::unordered_map<std::string, int> stockFishPerft(const std::string& fenString, int depth);
