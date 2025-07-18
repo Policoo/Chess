@@ -436,12 +436,7 @@ void Board::undoMove(const Move& move) {
             return;
         }
         case Flag::DBL_PUSH: {
-            hash ^= Zobrist::getEnPassantKey(enPassant);
-
             revertGameStats(start, end, state);
-
-            enPassant = state.enPassant;
-            hash ^= Zobrist::getEnPassantKey(enPassant);
             return;
         }
         case Flag::CASTLE_K:
@@ -487,6 +482,11 @@ void Board::revertGameStats(const int start, const int end, const Board::BoardSt
     hash ^= Zobrist::getColorKey(turn);
 
     lastCaptOrPawnAdv = state.lastCaptOrPawnAdv;
+
+    //restore en passant square
+    hash ^= Zobrist::getEnPassantKey(enPassant);
+    enPassant = state.enPassant;
+    hash ^= Zobrist::getEnPassantKey(enPassant);
 
     gameOver = false;
     currentMove--;
