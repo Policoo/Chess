@@ -2,7 +2,7 @@ Test 1
       depth:1
       r6r/1b2k1bq/8/8/7B/8/8/R3K2R b KQ - 3 2
 
-Test 2 - En passant to get out of check (Fail)
+Test 2
       depth: 1
       8/8/8/2k5/2pP4/8/B7/4K3 b - d3 0 3
 
@@ -26,7 +26,7 @@ Test 7
       depth: 1
       2r5/3pk3/8/2P5/8/2K5/8/8 w - - 5 4
 
-Test 8 FAIL
+Test 8
       depth: 3
       rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
 
@@ -46,7 +46,7 @@ Test 12
       depth: 6
       8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1
 
-Test 13
+Test 13 - FAIL
       depth: 6
       5k2/8/8/8/8/8/8/4K2R w K - 0 1
 
@@ -54,11 +54,11 @@ Test 14
       depth: 6
       3k4/8/8/8/8/8/8/R3K3 w Q - 0 1
 
-Test 15 
+Test 15
       depth: 4
       r3k2r/1b4bq/8/8/8/8/7B/R3K2R w KQkq - 0 1
 
-Test 16 
+Test 16
       depth: 4
       r3k2r/8/3Q4/8/8/5q2/8/R3K2R b KQkq - 0 1
 

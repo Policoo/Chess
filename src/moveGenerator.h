@@ -25,44 +25,13 @@ public:
     static bool legalMovesExist(Board& board);
 
 private:
-    // <--> The "generate" functions are used to generate moves <--> //
+    static std::vector<Move> generateSlidingPieceMoves(Board& board, int index, int pieceType, bool returnEarly = false);
 
-    static std::vector<Move> generateKingMoves(Board& board, const int index);
+    static std::vector<Move> generateKingMoves(Board& board, const int index, bool returnEarly = false);
 
-    static std::vector<Move> generateCastleMoves(Board& board, const int index);
+    static std::vector<Move> generateCastleMoves(Board& board, const int index, bool returnEarly = false);
 
-    static std::vector<Move> generateQueenMoves(Board& board, const int index);
+    static std::vector<Move> generateKnightMoves(Board& board, const int index, bool returnEarly = false);
 
-    static std::vector<Move> generateRookMoves(Board& board, const int index);
-
-    static std::vector<Move> generateBishopMoves(Board& board, const int index);
-
-    static std::vector<Move> generateKnightMoves(Board& board, const int index);
-
-    static std::vector<Move> generatePawnMoves(Board& board, int index);
-
-    static std::vector<Move> scanDirectionOnce(Board& board, const int index, const std::vector<int>& directions);
-
-    static std::vector<Move> scanDirectionUntilCollision(Board& board, const int index,
-                                                         const std::vector<int>& directions);
-
-    // <--> The "check" functions are used to determine if there are legal moves, so they return early <--> //
-
-    static bool checkKingMoves(Board& board, const int index);
-
-    static bool checkCastleMoves(Board& board, const int index);
-
-    static bool checkQueenMoves(Board& board, const int index);
-
-    static bool checkRookMoves(Board& board, const int index);
-
-    static bool checkBishopMoves(Board& board, const int index);
-
-    static bool checkKnightMoves(Board& board, const int index);
-
-    static bool checkPawnMoves(Board& board, const int index);
-
-    static bool checkDirectionOnce(Board& board, const int index, const std::vector<int>& directions);
-
-    static bool checkDirectionUntilCollision(Board& board, const int index, const std::vector<int>& directions);
+    static std::vector<Move> generatePawnMoves(Board& board, int index, bool returnEarly = false);
 };

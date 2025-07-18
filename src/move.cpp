@@ -2,37 +2,61 @@
 #include "piece.h"
 #include "util/utils.h"
 
-Move::Move(const int start, const int end, const Flag flag, const int promotion) :
-    start_(start),
-    end_(end),
-    flag_(flag),
-    promotion_(promotion) {
+Move::Move(const int start, const int end, const Flag flag) :
+    from(start),
+    to(end),
+    moveFlag(flag) {
 }
 
 int Move::start() const {
-    return start_;
+    return from;
 }
 
 int Move::end() const {
-    return end_;
+    return to;
 }
 
 Flag Move::flag() const {
-    return flag_;
-}
-
-int Move::promotion() const {
-    return promotion_;
+    return moveFlag;
 }
 
 void Move::setPromotion(const int promotion) {
-    promotion_ = promotion;
+    switch (promotion) {
+        case Piece::ROOK:
+            moveFlag = Flag::PROMO_R;
+            break;
+        case Piece::KNIGHT:
+            moveFlag = Flag::PROMO_N;
+            break;
+        case Piece::BISHOP:
+            moveFlag = Flag::PROMO_B;
+            break;
+        case Piece::QUEEN:
+            moveFlag = Flag::PROMO_Q;
+            break;
+    }
 }
 
 std::string Move::toString() const {
     std::string promotionString;
-    if (flag_ == Flag::PROMOTION) {
-        promotionString = static_cast<char>(tolower(Piece::toString(promotion_)));
+
+    switch (moveFlag) {
+        case Flag::PROMO_B:
+            promotionString = "b";
+            break;
+        case Flag::PROMO_N:
+            promotionString = "n";
+            break;
+        case Flag::PROMO_R:
+            promotionString = "r";
+            break;
+        case Flag::PROMO_Q:
+            promotionString = "q";
+            break;
+        default:
+            // not a promotion
+            break;
     }
-    return getChessCoords(start_) + getChessCoords(end_) + promotionString;
+
+    return getChessCoords(from) + getChessCoords(to) + promotionString;
 }

@@ -36,9 +36,10 @@ public:
      * @brief Determines if the move is legal by seeing if the king is in check or if the piece is pinned.
      * @param start  Start index of piece.
      * @param end  End index of piece.
+     * @param flag
      * @return True if move is legal, false otherwise.
     */
-    bool isLegalMove(int start, int end, bool isEnPassant = false);
+    bool isLegalMove(int start, int end, Flag flag);
 
     /**
      * @brief Determines if the player, whose turn it is, is in check. Does so by scanning outwards from the
@@ -47,16 +48,6 @@ public:
      * @return true if the king is in check, false otherwise.
      */
     bool isCheck() const;
-
-    /**
-     * Goes through the board to get the coordinates of the king of the
-     * given color.
-     *
-     * @param color color of the king you want the coordinates of.
-     * @return an array containing the x and y-axis coordinates of the king.
-     */
-    int getKingIndex(int color);
-
 
     bool isEmpty(int index);
 
@@ -89,10 +80,25 @@ public:
 
     int getEnPassant() const;
 
+    uint64_t getCheck() const {
+        return check;
+    }
+
+    uint64_t getCheckers() const {
+        return checkers;
+    }
+
     bool isGameOver() const;
 
-    std::vector<int> &getPiecePositions(int color);
+    uint64_t &getPiecePositions(int piece);
 
+    uint64_t& getPiecePositionsColor(int color);
+
+    uint64_t& getPieceAttackMap(int position, int color);
+
+    uint64_t& getColorAttackMap(int color);
+
+    uint64_t& getPins(int index, int color);
 
     std::string positionToFen();
 
@@ -108,22 +114,27 @@ private:
         int targetTile;
         int castleRights;
         int enPassant;
-        int enPassantIndex;
         int lastCaptOrPawnAdv;
     };
 
     std::array<int, 64> tile;
 
     std::vector<BoardState> boardState;
-    std::unordered_map<int, int> remainingPieces;
-    std::unordered_map<int, int> kingPositions;
     std::unordered_map<uint64_t, int> positionHistory;
 
-    std::unordered_map<int, uint64_t> attackMap;
-    std::unordered_map<int, std::vector<uint64_t> > attackedTiles;
-    std::unordered_map<int, std::vector<uint64_t> > pins;
-    std::unordered_map<int, std::vector<int> > piecePositions;
+    //TODO: First two slots are useless here, see if we can get rid of them (maybe we only access this through a func?)
+    std::array<uint64_t, 14> piecePositions;
+    std::array<uint64_t, 2> piecePositionsColor;
+    std::array<uint64_t, 2> attackMap;
 
+    //first 64 is white, second 64 is black. Because of the values of the color we can access with index + color
+    std::array<uint64_t, 128> attackedTiles;
+    std::array<uint64_t, 128> pins;
+
+    //small helper function for accessing the indices for the arrays above
+    static int indexWithColor(const int index, const int color) {
+        return index + color * 64;
+    }
 
     int enPassant;
     int castleRights;
@@ -133,7 +144,7 @@ private:
     int turn;
 
     uint64_t check;
-    uint64_t doubleCheck;
+    uint64_t checkers;
 
     bool gameOver;
     uint64_t hash;
@@ -151,10 +162,6 @@ private:
     void makeBoardFromFen(const std::string &fenString);
 
     void initializePiecePositions();
-
-    void initializeAttackTiles();
-
-    void initializePinLines();
 
     /**
      * Updates the gameOver variable according to the current game state
@@ -209,12 +216,9 @@ private:
     void revertGameStats(const int start, const int end, const Board::BoardState &state);
 
     /**
-     * @brief Updates the attack map for all pieces that saw the move and for the moved piece.
-     *
-     * @param oldIndex - Old board index of the moved piece.
-     * @param newIndex - New board index of the moved piece.
+     * @brief updates the attacked tiles for each side
     */
-    void updateAttackedTiles(const int oldIndex, const int newIndex);
+    void updateAttackedTiles();
 
     /**
      * @brief Updates the pins map with any new pins and deletes old ones.
@@ -222,24 +226,15 @@ private:
     void updatePins();
 
     /**
-     * Calculates a bitboard of what the piece at index can see.
-     * @param index - Board index where the piece is.
-     * @return bitboard where a square seen by the piece is set to 1.
-     */
-    uint64_t calculateAttackedTiles(int index);
-
-    /**
-     * Calculates a bitboard of a pin line starting from this piece.
-     * @param index - Board index where the piece is.
-     * @return bitboard containing the pin line, or 0L if there is no pin line.
-     */
-    uint64_t calculatePinLine(const int index);
-
-    /**
      * Determines if the king is in check. If yes, the "check" and "doubleCheck" variables will become
      * a bitboard, representing the line of sight of a piece that can see the king.
     */
     void determineCheckLine();
+
+    /**
+     * Updates the piece positions for both colors
+     */
+    void updatePiecePositionsColor();
 
     /**
      * Makes the current position into a unique, or at least close to unique, hash.

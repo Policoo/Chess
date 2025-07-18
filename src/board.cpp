@@ -1,5 +1,7 @@
 #include "board.h"
 
+#include <bit>
+
 #include "moveGenerator.h"
 #include "piece.h"
 #include "util/precomputedGameData.h"
@@ -15,8 +17,6 @@ Board::Board(const std::string& fenString) :
     gameOver(false) {
     positionHistory.reserve(100);
     boardState.reserve(100);
-    piecePositions[Piece::BLACK].reserve(20);
-    piecePositions[Piece::WHITE].reserve(20);
 
     for (int i = 0; i < 64; i++) {
         tile[i] = 0;
@@ -30,8 +30,10 @@ Board::Board(const std::string& fenString) :
     }
 
     initializePiecePositions();
-    initializeAttackTiles();
-    initializePinLines();
+    updatePiecePositionsColor();
+
+    updateAttackedTiles();
+    updatePins();
 
     determineCheckLine();
     hashPosition();
@@ -44,14 +46,14 @@ void Board::startPos() {
     turn = Piece::WHITE;
     castleRights = 0b1111;
 
-    tile[0] = Piece::create(Piece::BLACK, Piece::ROOK);
-    tile[1] = Piece::create(Piece::BLACK, Piece::KNIGHT);
-    tile[2] = Piece::create(Piece::BLACK, Piece::BISHOP);
-    tile[3] = Piece::create(Piece::BLACK, Piece::QUEEN);
-    tile[4] = Piece::create(Piece::BLACK, Piece::KING);
-    tile[5] = Piece::create(Piece::BLACK, Piece::BISHOP);
-    tile[6] = Piece::create(Piece::BLACK, Piece::KNIGHT);
-    tile[7] = Piece::create(Piece::BLACK, Piece::ROOK);
+    tile[0] = Piece::create(Piece::ROOK,   Piece::BLACK);
+    tile[1] = Piece::create(Piece::KNIGHT, Piece::BLACK);
+    tile[2] = Piece::create(Piece::BISHOP, Piece::BLACK);
+    tile[3] = Piece::create(Piece::QUEEN,  Piece::BLACK);
+    tile[4] = Piece::create(Piece::KING,   Piece::BLACK);
+    tile[5] = Piece::create(Piece::BISHOP, Piece::BLACK);
+    tile[6] = Piece::create(Piece::KNIGHT, Piece::BLACK);
+    tile[7] = Piece::create(Piece::ROOK,   Piece::BLACK);
 
     for (int index = 8; index < 16; index++) {
         tile[index] = Piece::create(Piece::PAWN, Piece::BLACK);
@@ -61,25 +63,14 @@ void Board::startPos() {
         tile[index] = Piece::create(Piece::PAWN, Piece::WHITE);
     }
 
-    tile[56] = Piece::create(Piece::ROOK, Piece::WHITE);
+    tile[56] = Piece::create(Piece::ROOK,   Piece::WHITE);
     tile[57] = Piece::create(Piece::KNIGHT, Piece::WHITE);
     tile[58] = Piece::create(Piece::BISHOP, Piece::WHITE);
-    tile[59] = Piece::create(Piece::QUEEN, Piece::WHITE);
-    tile[60] = Piece::create(Piece::KING, Piece::WHITE);
+    tile[59] = Piece::create(Piece::QUEEN,  Piece::WHITE);
+    tile[60] = Piece::create(Piece::KING,   Piece::WHITE);
     tile[61] = Piece::create(Piece::BISHOP, Piece::WHITE);
     tile[62] = Piece::create(Piece::KNIGHT, Piece::WHITE);
-    tile[63] = Piece::create(Piece::ROOK, Piece::WHITE);
-
-    remainingPieces[Piece::create(Piece::QUEEN, Piece::WHITE)] = 1;
-    remainingPieces[Piece::create(Piece::ROOK, Piece::WHITE)] = 2;
-    remainingPieces[Piece::create(Piece::BISHOP, Piece::WHITE)] = 2;
-    remainingPieces[Piece::create(Piece::KNIGHT, Piece::WHITE)] = 2;
-    remainingPieces[Piece::create(Piece::PAWN, Piece::WHITE)] = 8;
-    remainingPieces[Piece::create(Piece::QUEEN, Piece::BLACK)] = 1;
-    remainingPieces[Piece::create(Piece::ROOK, Piece::BLACK)] = 2;
-    remainingPieces[Piece::create(Piece::BISHOP, Piece::BLACK)] = 2;
-    remainingPieces[Piece::create(Piece::KNIGHT, Piece::BLACK)] = 2;
-    remainingPieces[Piece::create(Piece::PAWN, Piece::BLACK)] = 8;
+    tile[63] = Piece::create(Piece::ROOK,   Piece::WHITE);
 }
 
 void Board::makeBoardFromFen(const std::string& fenString) {
@@ -123,7 +114,6 @@ void Board::makeBoardFromFen(const std::string& fenString) {
                 tile[index] = Piece::create(Piece::PAWN, color);
                 break;
         }
-        remainingPieces[tile[index]]++;
         index++;
     }
 
@@ -178,62 +168,15 @@ void Board::makeBoardFromFen(const std::string& fenString) {
 }
 
 void Board::initializePiecePositions() {
-    int whiteIndex = 0;
-    int blackIndex = 0;
+    piecePositions.fill(0LL);
 
     for (int index = 0; index < 64; index++) {
         if (tile[index] == 0) {
             continue;
         }
 
-        if (Piece::color(tile[index]) == Piece::WHITE) {
-            tile[index] = Piece::setIndex(tile[index], whiteIndex);
-            whiteIndex++;
-        }
-        else {
-            tile[index] = Piece::setIndex(tile[index], blackIndex);
-            blackIndex++;
-        }
-
-        piecePositions[Piece::color(tile[index])].push_back(index);
-
-        //initialize king positions
-        if (isKing(index)) {
-            kingPositions[Piece::color(tile[index])] = index;
-        }
+        piecePositions[tile[index]] |= (1ULL << index);
     }
-}
-
-void Board::initializeAttackTiles() {
-    for (int color: { Piece::WHITE, Piece::BLACK }) {
-        uint64_t attackMapBitboard = 0LL;
-
-        for (const int piecePos: piecePositions[color]) {
-            uint64_t pieceAttackMap = calculateAttackedTiles(piecePos);
-
-            attackMapBitboard |= pieceAttackMap;
-            attackedTiles[color].push_back(pieceAttackMap);
-        }
-
-        attackMap[color] = attackMapBitboard;
-    }
-}
-
-void Board::initializePinLines() {
-    //we have to switch the turn for calculatePinLine to work properly when initializing
-    turn = (turn == Piece::WHITE) ? Piece::BLACK : Piece::WHITE;
-
-    for (int color: { Piece::WHITE, Piece::BLACK }) {
-        for (const int piecePos: piecePositions[color]) {
-            uint64_t pinLine = calculatePinLine(piecePos);
-
-            if (pinLine != 0LL) {
-                pins[Piece::color(tile[piecePos])].push_back(pinLine);
-            }
-        }
-    }
-
-    turn = (turn == Piece::WHITE) ? Piece::BLACK : Piece::WHITE;
 }
 
 void Board::hashPosition() {
@@ -244,14 +187,12 @@ void Board::hashPosition() {
             continue;
         }
 
-        hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[index]), index);
+        hash ^= Zobrist::getKey(tile[index], index);
     }
 
     hash ^= Zobrist::getColorKey(turn);
     hash ^= Zobrist::getCastleKey(castleRights);
-    if (enPassant != 0) {
-        hash ^= Zobrist::getEnPassantKey(enPassant);
-    }
+    hash ^= Zobrist::getEnPassantKey(enPassant);
 }
 
 // <--> INITIALIZING BOARD <--> //
@@ -265,34 +206,27 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
 
     //save current position
     boardState.push_back(
-            {
-                tile[end],
-                castleRights,
-                enPassant,
-                Piece::index(tile[enPassant]),
-                lastCaptOrPawnAdv
-            }
-            );
+        {
+            tile[end],
+            castleRights,
+            enPassant,
+            lastCaptOrPawnAdv
+        }
+    );
 
-    //remove start piece and end piece (if there is one) from the hash
-    hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[start]), start);
-    if (tile[end] != 0) {
-        hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[end]), end);
-
-        //handle a capture (since we are checking tile[end] != 0 anyway)
-        remainingPieces[Piece::ignoreIndex(tile[end])]--;
-        piecePositions[Piece::color(tile[end])][Piece::index(tile[end])] = -1;
-        attackedTiles[Piece::color(tile[end])][Piece::index(tile[end])] = 0LL;
-        lastCaptOrPawnAdv = currentMove;
-    }
+    //remove start piece from the hash
+    hash ^= Zobrist::getKey(tile[start], start);
 
     //move the piece
     tile[end] = tile[start];
     tile[start] = 0;
-    piecePositions[Piece::color(tile[end])][Piece::index(tile[end])] = end;
+
+    //update piece position
+    piecePositions[tile[end]] &= ~(1LL << start);
+    piecePositions[tile[end]] |= (1LL << end);
 
     switch (flag) {
-        case Flag::NONE: {
+        case Flag::QUIET: {
             updateGameState(start, end, skipGameOverCheck);
             if (isPawn(end)) {
                 lastCaptOrPawnAdv = currentMove;
@@ -300,7 +234,64 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
 
             return;
         }
-        case Flag::CASTLE: {
+        case Flag::PROMO_N:
+        case Flag::PROMO_B:
+        case Flag::PROMO_R:
+        case Flag::PROMO_Q: {
+            //remove old pawn
+            piecePositions[tile[end]] &= ~(1LL << end);
+
+            int promotion = Piece::create(flag - 1, Piece::color(tile[end]));
+
+            //create promoted piece
+            tile[end] = promotion;
+            piecePositions[tile[end]] |= (1LL << end);
+
+            lastCaptOrPawnAdv = currentMove;
+        }
+        case Flag::CAPTURE: {
+            //check this to make sure. Promos also get here and not all are captures
+            int piece = boardState[boardState.size() - 1].targetTile;
+            if (piece == 0) {
+                updateGameState(start, end, skipGameOverCheck);
+                return;
+            }
+
+            //remove captured piece from hash
+            hash ^= Zobrist::getKey(piece, end);
+
+            //remove captured piece from positions
+            piecePositions[boardState[boardState.size() - 1].targetTile] &= ~(1LL << end);
+
+            lastCaptOrPawnAdv = currentMove;
+            updateGameState(start, end, skipGameOverCheck);
+            return;
+        }
+        case Flag::EN_PASSANT: {
+            piecePositions[tile[enPassant]] &= ~(1LL << enPassant);
+
+            //capture enemy pawn
+            hash ^= Zobrist::getKey(tile[enPassant], enPassant);
+            tile[enPassant] = 0;
+
+            lastCaptOrPawnAdv = currentMove;
+            updateGameState(start, end, skipGameOverCheck);
+            return;
+        }
+        case Flag::DBL_PUSH: {
+            //record en passant key before we record it in updateGameState
+            hash ^= Zobrist::getEnPassantKey(end);
+            lastCaptOrPawnAdv = currentMove;
+
+            updateGameState(start, end, skipGameOverCheck);
+
+            //it's important to do this after updating game state, cause otherwise it resets to 0
+            enPassant = end;
+
+            return;
+        }
+        case Flag::CASTLE_K:
+        case Flag::CASTLE_Q: {
             //figure out if we are moving left or right
             int rookStart, rookEnd;
             if (start - end < 0) {
@@ -313,83 +304,32 @@ void Board::makeMove(const Move& move, const bool skipGameOverCheck) {
             }
 
             //move the rook, while handling the hash and piecePositions
-            hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[rookStart]), rookEnd);
+            hash ^= Zobrist::getKey(tile[rookStart], rookStart);
             tile[rookEnd] = tile[rookStart];
             tile[rookStart] = 0;
-            piecePositions[Piece::color(tile[rookEnd])][Piece::index(tile[rookEnd])] = rookEnd;
-            hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[rookEnd]), rookEnd);
 
-            updateAttackedTiles(rookEnd, rookStart);
+            //update rook position
+            piecePositions[tile[rookEnd]] &= ~(1LL << rookStart);
+            piecePositions[tile[rookEnd]] |= (1LL << rookEnd);
+
+            hash ^= Zobrist::getKey(tile[rookEnd], rookEnd);
+
+            updateAttackedTiles();
             updateGameState(start, end, skipGameOverCheck);
             return;
-        }
-        case Flag::EN_PASSANT: {
-            //capture enemy pawn
-            hash ^= Zobrist::getKey(tile[enPassant], enPassant);
-            remainingPieces[Piece::ignoreIndex(tile[enPassant])]--;
-            piecePositions[Piece::color(tile[enPassant])][Piece::index(tile[enPassant])] = -1;
-            tile[enPassant] = 0;
-
-            lastCaptOrPawnAdv = currentMove;
-            updateGameState(start, end, skipGameOverCheck);
-            return;
-        }
-        case Flag::PROMOTION: {
-            //remove old pawn
-            remainingPieces[Piece::ignoreIndex(tile[end])]--;
-
-            const int index = Piece::index(tile[end]);
-            int promotion = Piece::create(move.promotion(), Piece::color(tile[end]));
-            promotion = Piece::setIndex(promotion, index);
-
-            //create promoted piece
-            tile[end] = promotion;
-            remainingPieces[tile[end]]++;
-
-            lastCaptOrPawnAdv = currentMove;
-            updateGameState(start, end, skipGameOverCheck);
         }
     }
 }
 
 void Board::updateGameState(const int start, const int end, const bool skipGameOverCheck) {
-    updateAttackedTiles(start, end);
-    updatePins();
-
-    if (isKing(end)) {
-        kingPositions[Piece::color(tile[end])] = end;
-    }
-
     //update the hash with the moved piece
-    hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[end]), end);
+    hash ^= Zobrist::getKey(tile[end], end);
 
     //undo castle rights from hash
     hash ^= Zobrist::getCastleKey(castleRights);
 
-    //update castling rights if needed
-    if (const int castleRightsColorMask = (Piece::color(tile[end]) == Piece::WHITE) ? 3 : 12;
-        (castleRights & castleRightsColorMask) > 0) {
-        if (isKing(end)) {
-            castleRights &= (castleRightsColorMask ^ 0b1111);
-        }
-
-        //if the rooks are not on their start squares, that means they moved or were captured
-        if (!isRook(63) || Piece::color(tile[63]) == Piece::BLACK) {
-            castleRights &= 0b1110;
-        }
-
-        if (!isRook(56) || Piece::color(tile[56]) == Piece::BLACK) {
-            castleRights &= 0b1101;
-        }
-
-        if (!isRook(7) || Piece::color(tile[7]) == Piece::WHITE) {
-            castleRights &= 0b1011;
-        }
-
-        if (!isRook(0) || Piece::color(tile[0]) == Piece::WHITE) {
-            castleRights &= 0b0111;
-        }
-    }
+    //update castling rights; if that those squares see any action, no castling anymore
+    castleRights &= PGD::castleMask[start] & PGD::castleMask[end];
 
     //put new castleRights into hash
     hash ^= Zobrist::getCastleKey(castleRights);
@@ -398,12 +338,6 @@ void Board::updateGameState(const int start, const int end, const bool skipGameO
     if (enPassant > 0) {
         hash ^= Zobrist::getEnPassantKey(enPassant);
         enPassant = 0;
-    }
-
-    //if pawn moved up 2 squares, make en passant possible for next move
-    if (isPawn(end) && abs(start - end) == 16) {
-        enPassant = end;
-        hash ^= Zobrist::getEnPassantKey(enPassant);
     }
 
     //update turn, make sure hash is accurate
@@ -419,6 +353,9 @@ void Board::updateGameState(const int start, const int end, const bool skipGameO
     }
 
     currentMove++;
+    updatePiecePositionsColor();
+    updateAttackedTiles();
+    updatePins();
     determineCheckLine();
     if (!skipGameOverCheck)
         checkGameOver();
@@ -440,31 +377,75 @@ void Board::undoMove(const Move& move) {
     }
 
     //undo the moved piece's hash
-    hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[end]), end);
+    hash ^= Zobrist::getKey(tile[end], end);
 
     //move the piece back
     tile[start] = tile[end];
     tile[end] = 0;
-    piecePositions[Piece::color(tile[start])][Piece::index(tile[start])] = start;
 
-    //handle a capture
-    if (const int targetTile = state.targetTile;
-        targetTile != 0) {
-        tile[end] = targetTile;
-        remainingPieces[Piece::ignoreIndex(tile[end])]++;
-        piecePositions[Piece::color(tile[end])][Piece::index(tile[end])] = end;
-        attackedTiles[Piece::color(tile[end])][Piece::index(tile[end])] = calculateAttackedTiles(end);
-
-        //update the hash with the captured piece
-        hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[end]), end);
-    }
+    //update piece position
+    piecePositions[tile[start]] &= ~(1LL << end);
+    piecePositions[tile[start]] |= (1LL << start);
 
     switch (flag) {
-        case Flag::NONE: {
+        case Flag::QUIET: {
             revertGameStats(start, end, state);
             return;
         }
-        case Flag::CASTLE: {
+        case Flag::PROMO_N:
+        case Flag::PROMO_B:
+        case Flag::PROMO_R:
+        case Flag::PROMO_Q: {
+            //remove promoted piece
+            piecePositions[tile[start]] &= ~(1LL << start);
+
+            //make piece back into pawn
+            const int color = Piece::color(tile[start]);
+            tile[start] = Piece::create(Piece::PAWN, color);
+
+            //put pawn back
+            piecePositions[tile[start]] |= (1LL << start);
+        }
+        case Flag::CAPTURE: {
+            const int targetTile = state.targetTile;
+            if (targetTile == 0) {
+                revertGameStats(start, end, state);
+                return;
+            }
+            tile[end] = targetTile;
+            piecePositions[tile[end]] |= (1LL << end);
+
+            //update the hash with the captured piece
+            hash ^= Zobrist::getKey(tile[end], end);
+
+            revertGameStats(start, end, state);
+            return;
+        }
+        case Flag::EN_PASSANT: {
+            //create pawn and put him back
+            const int pastEnPassant = state.enPassant;
+
+            //create the pawn
+            int piece = Piece::create(Piece::PAWN, turn);
+            tile[pastEnPassant] = piece;
+
+            piecePositions[tile[pastEnPassant]] |= (1LL << pastEnPassant);
+
+            hash ^= Zobrist::getKey(tile[pastEnPassant], pastEnPassant);
+            revertGameStats(start, end, state);
+            return;
+        }
+        case Flag::DBL_PUSH: {
+            hash ^= Zobrist::getEnPassantKey(enPassant);
+
+            revertGameStats(start, end, state);
+
+            enPassant = state.enPassant;
+            hash ^= Zobrist::getEnPassantKey(enPassant);
+            return;
+        }
+        case Flag::CASTLE_K:
+        case Flag::CASTLE_Q: {
             //figure out if we are moving left or right
             int rookStart, rookEnd;
             if (start - end < 0) {
@@ -480,74 +461,25 @@ void Board::undoMove(const Move& move) {
             hash ^= Zobrist::getKey(tile[rookEnd], rookEnd);
             tile[rookStart] = tile[rookEnd];
             tile[rookEnd] = 0;
-            piecePositions[Piece::color(tile[rookStart])][Piece::index(tile[rookStart])] = rookStart;
             hash ^= Zobrist::getKey(tile[rookStart], rookStart);
 
-            updateAttackedTiles(rookStart, rookEnd);
+            piecePositions[tile[rookStart]] &= ~(1LL << rookEnd);
+            piecePositions[tile[rookStart]] |= (1LL << rookStart);
+
             revertGameStats(start, end, state);
             return;
-        }
-        case Flag::EN_PASSANT: {
-            //create pawn and put him back
-            const int enPassantIndex = state.enPassantIndex;
-            const int pastEnPassant = state.enPassant;
-
-            //create the pawn and set its index
-            int piece = Piece::create(Piece::PAWN, turn);
-            piece = Piece::setIndex(piece, enPassantIndex);
-            tile[pastEnPassant] = piece;
-
-            piecePositions[Piece::color(tile[pastEnPassant])][enPassantIndex] = pastEnPassant;
-            remainingPieces[Piece::ignoreIndex(tile[pastEnPassant])]++;
-
-            hash ^= Zobrist::getKey(tile[pastEnPassant], pastEnPassant);
-            revertGameStats(start, end, state);
-            return;
-        }
-        case Flag::PROMOTION: {
-            //remove promotion from remaining pieces
-            remainingPieces[Piece::ignoreIndex(tile[start])]--;
-            if (remainingPieces[tile[start]] < 1) {
-                remainingPieces.erase(tile[start]);
-            }
-
-            //make piece back into pawn
-            const int color = Piece::color(tile[start]);
-            const int index = Piece::index(tile[start]);
-            tile[start] = Piece::create(Piece::PAWN, color);
-            tile[start] = Piece::setIndex(tile[start], index);
-
-            //put pawn back in remaining pieces
-            remainingPieces[Piece::ignoreIndex(tile[start])]++;
-
-            revertGameStats(start, end, state);
         }
     }
 }
 
 void Board::revertGameStats(const int start, const int end, const Board::BoardState& state) {
-    if (isKing(start)) {
-        kingPositions[Piece::color(tile[start])] = start;
-    }
-
     //update hash with reverted piece
-    hash ^= Zobrist::getKey(Piece::ignoreIndex(tile[start]), start);
+    hash ^= Zobrist::getKey(tile[start], start);
 
     //revert castle rights
     hash ^= Zobrist::getCastleKey(castleRights);
     castleRights = state.castleRights;
     hash ^= Zobrist::getCastleKey(castleRights);
-
-    //undo enPassant hash if needed
-    if (enPassant > 0) {
-        hash ^= Zobrist::getEnPassantKey(enPassant);
-    }
-
-    //update new enPassant
-    enPassant = state.enPassant;
-    if (enPassant > 0) {
-        hash ^= Zobrist::getEnPassantKey(enPassant);
-    }
 
     //revert turn, make sure hash is accurate
     hash ^= Zobrist::getColorKey(turn);
@@ -558,7 +490,8 @@ void Board::revertGameStats(const int start, const int end, const Board::BoardSt
 
     gameOver = false;
     currentMove--;
-    updateAttackedTiles(end, start);
+    updatePiecePositionsColor();
+    updateAttackedTiles();
     updatePins();
     determineCheckLine();
 }
@@ -567,339 +500,177 @@ void Board::revertGameStats(const int start, const int end, const Board::BoardSt
 
 // <--> KEEPING TRACK OF ATTACKED TILES, PINS AND CHECKS <--> //
 
-void Board::updateAttackedTiles(const int oldIndex, const int newIndex) {
+void Board::updateAttackedTiles() {
+    attackedTiles.fill(0);
+    attackMap.fill(0);
+    const uint64_t blockerBitboard = piecePositionsColor[Piece::WHITE] | piecePositionsColor[Piece::BLACK];
     int colors[] = { Piece::WHITE, Piece::BLACK };
-    const int pieceIndex = Piece::index(tile[newIndex]);
-
-    //calculate the attacked tiles for the moved piece
-    attackedTiles[turn][pieceIndex] = calculateAttackedTiles(newIndex);
 
     for (int color: colors) {
-        const std::vector<int>& piecePositionsColor = piecePositions[color];
-        std::vector<uint64_t>& attackedTilesColor = attackedTiles[color];
-        uint64_t attackMapBitboard = 0LL;
+        uint64_t piecePosColor = piecePositionsColor[color];
 
+        while (piecePosColor) {
+            int piecePosition = popLSB(piecePosColor);
+            uint64_t attackMapBitboard = 0LL;
 
-        for (int i = 0; i < attackedTilesColor.size(); i++) {
-            //no point in looking at the moved piece, we already calculated it's attacked tiles
-            if (i == pieceIndex) {
-                attackMapBitboard |= attackedTilesColor[i];
-                continue;
-            }
-
-            const int piecePosition = piecePositionsColor[i];
-            const uint64_t moveBitboard = (1LL << oldIndex) | (1LL << newIndex);
-
-            //if the move intersected with the piece attacked tiles, and the piece is on the board
-            if ((attackedTilesColor[i] & moveBitboard) != 0 && piecePosition != -1) {
-                attackedTilesColor[i] = calculateAttackedTiles(piecePosition);
-            }
-
-            attackMapBitboard |= attackedTilesColor[i];
-        }
-
-        attackMap[color] = attackMapBitboard;
-    }
-}
-
-uint64_t Board::calculateAttackedTiles(const int index) {
-    const int pieceColor = Piece::color(tile[index]);
-    const std::vector<int>& directions = PGD::getPieceDirections(tile[index]);
-
-    switch (Piece::type(tile[index])) {
-        case Piece::PAWN:
-        case Piece::KNIGHT:
-        case Piece::KING:
-            //we precomputed this data already
-            return PGD::getAttackMap(tile[index], index);
-        default:
-            //sliding pieces would go in default
-            uint64_t bitboard = 0LL;
-
-            for (const int dir: directions) {
-                const int numSteps = PGD::getEdgeOfBoard(dir, index);
-                int curIndex = index;
-
-                for (int step = numSteps; step > 0; step--) {
-                    curIndex = curIndex + dir;
-                    bitboard |= (1LL << curIndex);
-
-                    //if the tile is empty, keep going
-                    if (tile[curIndex] == 0) {
-                        continue;
-                    }
-
-                    //if we find the opponents king, keep going. This is to cover an edge case in checks
-                    if (isKing(curIndex) && Piece::color(tile[curIndex]) != pieceColor) {
-                        continue;
-                    }
-
-                    //if we get here it means that we found a piece we don't care about, so break
+            switch (Piece::type(tile[piecePosition])) {
+                case Piece::PAWN:
+                case Piece::KNIGHT:
+                case Piece::KING:
+                    attackMapBitboard = PGD::getAttackMap(tile[piecePosition], piecePosition);
+                    attackedTiles[indexWithColor(piecePosition, color)] = attackMapBitboard;
                     break;
-                }
+                case Piece::QUEEN:
+                    attackMapBitboard =  PGD::getPseudoMoves(Piece::ROOK, piecePosition, blockerBitboard)
+                                        | PGD::getPseudoMoves(Piece::BISHOP, piecePosition, blockerBitboard);
+                    attackedTiles[indexWithColor(piecePosition, color)] = attackMapBitboard;
+                    break;
+                default:
+                    //rooks and bishops
+                    attackMapBitboard = PGD::getPseudoMoves(Piece::type(tile[piecePosition]), piecePosition, blockerBitboard);
+                    attackedTiles[indexWithColor(piecePosition, color)] = attackMapBitboard;
             }
 
-            return bitboard;
+            attackMap[color] |= attackMapBitboard;
+        }
     }
 }
 
 void Board::updatePins() {
-    pins[turn].clear();
-    const std::vector<int>& piecePositionsTurn = piecePositions[turn];
+    //reset pins
+    pins.fill(0);
 
-    for (const int& piecePos: piecePositionsTurn) {
-        if (piecePos == -1) {
+    uint64_t friendlyPieces = piecePositionsColor[turn];
+    uint64_t enemyPieces = piecePositionsColor[abs(turn - 1)];
+    uint64_t enemyPieces_c = enemyPieces;
+
+    const uint64_t kingPosition = piecePositions[Piece::create(Piece::KING, turn)];
+    uint64_t kingCopy = kingPosition;
+    int kingIndex = popLSB(kingCopy);
+
+    while (enemyPieces_c) {
+        int index = popLSB(enemyPieces_c);
+
+        if (isPawn(index) || isKnight(index) || isKing(index)) {
             continue;
         }
 
-        if (uint64_t pinLine = calculatePinLine(piecePos);
-            pinLine != 0LL) {
-            pins[turn].push_back(pinLine);
-        }
-    }
-}
+        uint64_t attackMap = PGD::getAttackMap(tile[index], index);
 
-uint64_t Board::calculatePinLine(const int index) {
-    //pawns, knights and kings can't pin
-    if (isPawn(index) || isKnight(index) || isKing(index)) {
-        return 0LL;
-    }
-
-    const int otherTurn = (turn == Piece::WHITE) ? Piece::BLACK : Piece::WHITE;
-    const int kingIndex = kingPositions[otherTurn];
-    const std::vector<int>& directions = PGD::getPieceDirections(tile[index]);
-
-    for (const int dir: directions) {
-        const int posDif = kingIndex - index;
-        const int steps = PGD::getEdgeOfBoard(dir, index);
-
-        //if piece can't see the king in this direction, or if it's at the edge of the board, don't search
-        if (dir * posDif < 0 || posDif % dir != 0 || steps == 0) {
+        //piece can't see king
+        if ((kingPosition & attackMap) == 0) {
             continue;
         }
 
-        //everything % 1 == 0, so make sure that it's actually worth searching this direction
-        if (std::abs(dir) == 1 && index / 8 != kingIndex / 8) {
+        const int64_t between = betweenMask(kingIndex, index);
+        const uint64_t friendlyIntersect = between & friendlyPieces;
+        uint64_t enemyIntersect = between & enemyPieces;
+
+        //if there is more than one piece in the way, or one of your own pieces, no pin
+        if (std::popcount(friendlyIntersect) != 1 || enemyIntersect != 0) {
             continue;
         }
 
-        int curIndex = index;
-        bool canPin = false;
+        const uint64_t pinLine = lineMask(kingIndex, index);
+        uint64_t pinLine_copy = pinLine;
 
-        //we add the square that the piece is on, so that captures can break the pin
-        uint64_t bitboard = (1LL << index);
+        //go through each square in the pin line and make sure it also knows the pin
+        while (pinLine_copy) {
+            const int pinIndex = popLSB(pinLine_copy);
 
-        for (int step = 0; step < steps; step++) {
-            curIndex = curIndex + dir;
-
-            //if tile is empty, add it to the bitboard
-            if (tile[curIndex] == 0) {
-                bitboard |= (1LL << curIndex);
-                continue;
-            }
-
-            //if you see your own piece, or if you see the other king, but you can't pin
-            if (Piece::color(tile[index]) == Piece::color(tile[curIndex]) || (isKing(curIndex) && !canPin)) {
-                break;
-            }
-
-            //if this is true, that means we found a king of the opposite color and we can pin
-            if (isKing(curIndex)) {
-                bitboard |= (1LL << curIndex);
-                return bitboard;
-            }
-
-            /*if we get here, the tile contains a piece that is of the other color, that is not a king. If canPin is true,
-            this is the second opponents piece we encountered, so a pin is not possible*/
-            if (canPin) {
-                break;
-            }
-
-            //if we get here that means we found an opponents piece that is not a king, so a pin is possible
-            bitboard |= (1LL << curIndex);
-            canPin = true;
+            pins[indexWithColor(pinIndex, turn)] = pinLine;
         }
     }
-
-    return 0LL;
 }
 
 void Board::determineCheckLine() {
-    const int attackingColor = (turn == Piece::WHITE) ? Piece::BLACK : Piece::WHITE;
-    const std::vector<uint64_t>& attackedTilesColor = attackedTiles[attackingColor];
-    const int kingPos = kingPositions[turn];
-    const uint64_t kingPosBitboard = 1LL << kingPos;
+    uint64_t enemyPieces = piecePositionsColor[abs(turn - 1)];
+    const uint64_t kingPosition = piecePositions[Piece::create(Piece::KING, turn)];
+    uint64_t kingCopy = kingPosition;
+    int kingIndex = popLSB(kingCopy);
 
+    //reset the checks
     check = 0LL;
-    doubleCheck = 0LL;
+    checkers = 0LL;
 
-    //if the king isn't in check
-    if ((attackMap[attackingColor] & kingPosBitboard) == 0LL) {
-        return;
-    }
+    while (enemyPieces) {
+        const int index = popLSB(enemyPieces);
+        uint64_t foundCheck = 0LL;
 
-    for (int index = 0; index < attackedTilesColor.size(); index++) {
-        const uint64_t& pieceAttackTiles = attackedTilesColor[index];
+        //we already calculated the attacked tiles, so we can just get them here
+        const uint64_t pieceAttackMap = attackedTiles[indexWithColor(index, Piece::color(tile[index]))];
 
-        //if this piece can't see the king, continue
-        if ((pieceAttackTiles & kingPosBitboard) == 0LL) {
+        //if piece cannot see king, continue
+        if (!(pieceAttackMap & kingPosition)) {
             continue;
         }
 
-        /* all this shit is to find out in which direction the king is getting checked, so that
-           we can properly generate the check/double check line */
-        const int& piecePos = piecePositions[attackingColor][index];
-        const std::vector<int>& directions = PGD::getPieceDirections(tile[piecePos]);
-        const int posDif = kingPos - piecePos;
-        int finalDir = 0;
+        //if we get here that means we can see the king, so get the checkline by drawing a line between king and piece
+        foundCheck = lineMask(kingIndex, index);
 
-        for (const int& dir: directions) {
-            //if the line of sight doesn't align with the kingPosition, don't search
-            if (dir * posDif < 0 || posDif % dir != 0) {
-                continue;
-            }
-
-            //everything % 1 == 0, so check that if direction is +/- 1, the piece and king are on the same row
-            if (std::abs(dir) == 1 && kingPos / 8 != piecePos / 8) {
-                continue;
-            }
-
-            //if we get here that means that this is the direction the piece can see the king in
-            finalDir = dir;
-            break;
+       //if you can't make a line, that means it's a knight move
+        if (!foundCheck) {
+            foundCheck = kingPosition | (1LL << index);
         }
 
-        //now create a bitboard to represent the check line
-        const int numSteps = PGD::getEdgeOfBoard(finalDir, piecePos);
-        uint64_t bitboard = 1LL << piecePos;
-        int curIndex = piecePos;
+        //mark the checker
+        checkers |= (1LL << index);
 
-        for (int step = numSteps; step > 0; step--) {
-            curIndex += finalDir;
-            bitboard |= (1LL << curIndex);
+        //if we break here then it's a double check
+        if (check) break;
 
-            //if we find a piece, it should be the king, so the check line is done
-            if (tile[curIndex] != 0) {
-                break;
-            }
-        }
-
-        if (check == 0LL) {
-            check = bitboard;
-        }
-        else {
-            doubleCheck = bitboard;
-        }
+        //remove king from checkline
+        check = foundCheck & ~kingPosition;
     }
 }
+
+void Board::updatePiecePositionsColor() {
+    piecePositionsColor.fill(0);
+
+    for (int code = 0; code < int(piecePositions.size()); ++code) {
+        uint64_t bb = piecePositions[code];
+        if (!bb) continue;
+        int color = code & 1;
+        piecePositionsColor[color] |= bb;
+    }
+}
+
 
 // <--> KEEPING TRACK OF ATTACKED TILES, PINS AND CHECKS <--> //
 
 // <--> GAME OVER LOGIC AND MOVE LEGALITY <--> //
 
-bool Board::isLegalMove(const int start, const int end, const bool isEnPassant) {
-    const int otherTurn = (turn == Piece::WHITE) ? Piece::BLACK : Piece::WHITE;
-    const std::vector<uint64_t>& pinLinesColor = pins[otherTurn];
+bool Board::isLegalMove(const int start, const int end, const Flag flag) {
+    //this is currently only used for en passant, so we do this hacky shit. Fix this if we need more flags
+    tile[end] = tile[start];
+    tile[start] = 0;
 
-    //if we are moving the king, make sure he is not in a square attacked by the opponent
-    if (isKing(start)) {
-        //it is a legal move if the king is not attacked
-        return (attackMap[otherTurn] & (1LL << end)) == 0;
-    }
+    int enPassantPiece = tile[enPassant];
+    tile[enPassant] = 0;
 
-    //if we get here that means we are not moving the king, and it's a double check, so move is not legal
-    if (doubleCheck != 0LL) {
-        return false;
-    }
+    piecePositions[tile[end]] &= ~(1LL << start);
+    piecePositions[tile[end]] |= (1LL << end);
+    piecePositions[enPassantPiece] &= ~(1LL << enPassant);
 
-    //if the piece is pinned, it can't move out of the pin line, so make sure it doesn't do that
-    for (const uint64_t& pinLine: pinLinesColor) {
-        //if this piece is not pinned, continue
-        if ((pinLine & (1LL << start)) == 0) {
-            continue;
-        }
+    updatePiecePositionsColor();
+    updateAttackedTiles();
+    determineCheckLine();
 
-        //if we get here the piece is pinned, so make sure it's not illegally moving out of the pin
-        if ((pinLine & (1LL << end)) == 0) {
-            return false;
-        }
+    bool isCheck = (check != 0);
 
-        //if we get here that means the piece is pinned, but this move is in the pin line, so it could be legal
-        break;
-    }
+    tile[start] = tile[end];
+    tile[end] = 0;
+    tile[enPassant] = enPassantPiece;
 
-    //if we are in check, make sure to either block it or capture the piece checking the king
-    if (check != 0LL) {
-        //if we are either capturing the piece checking us or moving in front of the check, it's legal
-        return (check & (1LL << end)) != 0;
-    }
+    piecePositions[tile[start]] &= ~(1LL << end);
+    piecePositions[tile[start]] |= (1LL << start);
+    piecePositions[tile[enPassant]] |= (1LL << enPassant);
 
-    //this is to cover en passant "pins", so if we are on the same row as the king, check if we are pinned
-    if (isEnPassant && (start / 8 == this->kingPositions[turn] / 8)) {
-        //TODO: Make this prettier cause jesus christ what the fuck is this, maybe separate function?
-        bool foundRook = false;
+    updatePiecePositionsColor();
+    updateAttackedTiles();
+    determineCheckLine();
 
-        for (const int direction: { 1, -1 }) {
-            bool expectingPawn = direction * (enPassant - start) > 0;
-
-            //this will be true if we are moving in the direction of the king
-            if (direction * (this->kingPositions[turn] - enPassant) > 0) {
-                const int numSteps = PGD::getEdgeOfBoard(direction, start);
-
-                for (int index = start + direction; (index <= start + numSteps && index != this->kingPositions[turn]); index = index + direction) {
-                    if (Piece::type(tile[index]) == Piece::PAWN && Piece::color(tile[index]) == otherTurn) {
-                        if (expectingPawn) {
-                            expectingPawn = false;
-                            continue;
-                        }
-
-                        //we are not expecting a pawn, meaning there is something that would block a "pin"
-                        return true;
-                    }
-
-                    //we are searching in the direction of the king, so if we find anything other than the enemy
-                    //pawn, an en passant pin is not possible
-                    if (tile[index] != 0) {
-                        return true;
-                    }
-                }
-            } else {
-                const int numSteps = PGD::getEdgeOfBoard(direction, start);
-
-                for (int index = start + direction; index <= start + numSteps; index = index + direction) {
-                    if (Piece::type(tile[index]) == Piece::PAWN && Piece::color(tile[index]) == otherTurn) {
-                        if (expectingPawn) {
-                            expectingPawn = false;
-                            continue;
-                        }
-
-                        //we are not expecting a pawn, meaning there is something that would block a "pin"
-                        return true;
-                    }
-
-                    if ((Piece::type(tile[index]) == Piece::ROOK || Piece::type(tile[index]) == Piece::QUEEN) && Piece::color(tile[index]) == otherTurn) {
-                        foundRook = true;
-                        break;
-                    }
-
-                    //we are searching in the direction of the rook, so if we find anything other than the enemy
-                    //pawn, rook or queen, an en passant pin is not possible
-                    if (tile[index] != 0) {
-                        return true;
-                    }
-                }
-            }
-
-            //if we get here, and we haven't returned true yet, that means that the rook could directly see
-            //the king if it wasn't for our pawns, so if we found a rook, en passant is "pinned"
-            if (foundRook) {
-                return false;
-            }
-        }
-    }
-
-    //if we get here, the piece isn't pinned, and it's not a check, so it's free to move
-    return true;
+    return !isCheck;
 }
 
 bool Board::isCheckMate() {
@@ -932,33 +703,33 @@ bool Board::fiftyMoveRule() const {
 
 bool Board::insufficientMaterial() {
     bool insufficientMat[2] = { false, false };
-    constexpr int colors[2] = { Piece::WHITE, Piece::BLACK };
+    int colors[2] = { Piece::WHITE, Piece::BLACK };
 
     for (int index = 0; index < 2; index++) {
         //if there are pawns, there is sufficient material
-        if (remainingPieces[Piece::create(Piece::PAWN, colors[index])] > 0) {
+        if (std::popcount(piecePositions[Piece::create(Piece::PAWN, colors[index])]) > 0) {
             return false;
         }
 
         //if there are rooks, there is sufficient material
-        if (remainingPieces[Piece::create(Piece::ROOK, colors[index])] > 0) {
+        if (std::popcount(piecePositions[Piece::create(Piece::ROOK, colors[index])]) > 0) {
             return false;
         }
 
         //if there are queens, there is sufficient material
-        if (remainingPieces[Piece::create(Piece::QUEEN, colors[index])] > 0) {
+        if (std::popcount(piecePositions[Piece::create(Piece::QUEEN, colors[index])]) > 0) {
             return false;
         }
 
         //if color has no bishops, that means that he only has a king and knights left, so insufficient
-        if (remainingPieces[Piece::create(Piece::BISHOP, colors[index])] == 0) {
+        if (std::popcount(piecePositions[Piece::create(Piece::BISHOP, colors[index])]) == 0) {
             insufficientMat[index] = true;
             continue;
         }
 
         //if we get here, we know this color has bishops, so check if we have one bishop and no knights
-        if (remainingPieces[Piece::create(Piece::BISHOP, colors[index])] == 1 &&
-            remainingPieces[Piece::create(Piece::KNIGHT, colors[index])] == 0) {
+        if (std::popcount(piecePositions[Piece::create(Piece::BISHOP, colors[index])]) == 1 &&
+            std::popcount(piecePositions[Piece::create(Piece::KNIGHT, colors[index])]) == 0) {
             insufficientMat[index] = true;
         }
     }
@@ -968,10 +739,6 @@ bool Board::insufficientMaterial() {
 
 bool Board::isCheck() const {
     return check != 0LL;
-}
-
-int Board::getKingIndex(int color) {
-    return kingPositions[color];
 }
 
 // <--> GAME OVER LOGIC AND MOVE LEGALITY <--> //
@@ -1078,18 +845,6 @@ std::string Board::debugString() {
     obj += "Hash: " + std::to_string(hash) + "\n";
     obj += "Game over: " + std::to_string(gameOver) + "\n";
 
-    obj += "Piece positions:\n";
-    for (int i = 0; i < 2; i++) {
-        obj += "\t" + colorString[i] + ": [";
-        for (int j = 0; j < piecePositions[colors[i]].size(); j++) {
-            obj += std::to_string(piecePositions[colors[i]][j]);
-            if (j != piecePositions[colors[i]].size() - 1) {
-                obj += ", ";
-            }
-        }
-        obj += "]\n";
-    }
-
     obj += "Position history: [";
     for (auto it = positionHistory.begin(); it != positionHistory.end(); ++it) {
         obj += std::to_string(it->first) + "=" + std::to_string(it->second);
@@ -1099,34 +854,41 @@ std::string Board::debugString() {
     }
     obj += "]\n";
 
-    obj += "King positions:\n";
-    for (int i = 0; i < 2; i++) {
-        obj += "\t" + colorString[i] + ": " + std::to_string(kingPositions[colors[i]]) + "\n";
+    obj += "Piece positions:\n";
+    for (int c = 0; c < 2; ++c) {
+        obj += "\t" + colorString[c] + ": [";
+        for (size_t code = 0; code < piecePositionsColor.size(); ++code) {
+            if ((code & 1) != c) continue;  // skip entries not matching this color
+            obj += "\n" + bitboardString(piecePositionsColor[code]) + "\n";
+        }
+        obj += "]\n";
     }
 
     obj += "Check:\n";
     obj += bitboardString(check) + "\n";
-    obj += "Double check:\n";
-    obj += bitboardString(doubleCheck) + "\n";
+    obj += "Checkers:\n";
+    obj += bitboardString(checkers) + "\n";
 
     obj += "Attack maps:\n";
     for (int i = 0; i < 2; i++) {
         obj += colorString[i] + ":\n" + bitboardString(attackMap[colors[i]]) + "\n";
     }
 
-    obj += "Attacked tiles:\n";
-    for (int i = 0; i < 2; i++) {
+    obj += "Attacked tiles (non-zero only):\n";
+    for (int i = 0; i < 2; ++i) {
         obj += colorString[i] + ":\n";
-        for (uint64_t bitboard: attackedTiles[colors[i]]) {
-            obj += bitboardString(bitboard) + "\n";
+        for (int sq = 0; sq < 64; ++sq) {
+            uint64_t bb = attackedTiles[indexWithColor(sq, colors[i])];
+            if (bb) obj += bitboardString(bb) + "\n";
         }
     }
 
-    obj += "Pins:\n";
-    for (int i = 0; i < 2; i++) {
-        obj += colorString[i] + "\n";
-        for (uint64_t bitboard: pins[colors[i]]) {
-            obj += bitboardString(bitboard) + "\n";
+    obj += "Pins (non-zero only):\n";
+    for (int i = 0; i < 2; ++i) {
+        obj += colorString[i] + ":\n";
+        for (int sq = 0; sq < 64; ++sq) {
+            uint64_t bb = pins[indexWithColor(sq, colors[i])];
+            if (bb) obj += bitboardString(bb) + "\n";
         }
     }
 
@@ -1205,8 +967,24 @@ bool Board::isGameOver() const {
     return gameOver;
 }
 
-std::vector<int>& Board::getPiecePositions(int color) {
-    return piecePositions[color];
+uint64_t& Board::getPiecePositions(int piece) {
+    return piecePositions[piece];
+}
+
+uint64_t& Board::getPiecePositionsColor(int color) {
+    return piecePositionsColor[color];
+}
+
+uint64_t& Board::getPieceAttackMap(int position, int color) {
+    return attackedTiles[indexWithColor(position, color)];
+}
+
+uint64_t& Board::getColorAttackMap(int color) {
+    return attackMap[color];
+}
+
+uint64_t& Board::getPins(int index, int color) {
+   return pins[indexWithColor(index, color)];
 }
 
 // <--> GETTERS AND SUCH <--> //

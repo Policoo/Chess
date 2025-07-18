@@ -328,7 +328,8 @@ void GameWidget::handleClick(int index) {
     if (!pieceMoves.empty() && std::find(pieceMoves.begin(), pieceMoves.end(), perIndex) != pieceMoves.end()) {
         for (Move move: legalMoves) {
             if (move.start() == perLastClick && move.end() == perIndex) {
-                if (move.flag() == Flag::PROMOTION) {
+                if (move.flag() == Flag::PROMO_B || move.flag() == Flag::PROMO_N || move.flag() == Flag::PROMO_R
+                    || move.flag() == Flag::PROMO_Q) {
                     showPromotionOptions(move.end());
                     promotionMove = move;
                     return;

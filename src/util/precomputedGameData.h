@@ -11,6 +11,16 @@
 */
 class PGD {
 public:
+    static constexpr uint64_t EDGE_RING = 0xFF818181818181FF;
+
+    static inline constexpr uint64_t FILE_A = 0x0101010101010101ULL;
+    static inline constexpr uint64_t FILE_H = 0x8080808080808080ULL;
+    static inline constexpr uint64_t RANK_1 = 0x00000000000000FFULL;
+    static inline constexpr uint64_t RANK_8 = 0xFF00000000000000ULL;
+
+    static const std::array<std::array<uint64_t, 64>, 64> squaresBetween;
+    static const std::array<uint8_t, 64> castleMask;
+
     /**
      * @param direction Direction the piece is/would be going in.
      * @param index Board index
@@ -32,6 +42,16 @@ public:
     */
     static const uint64_t& getAttackMap(int piece, int piecePosition);
 
+    //TODO: WRITE DOCS
+    /**
+     *
+     * @param pieceType
+     * @param piecePosition
+     * @param blockerBitboard
+     * @return
+     */
+    static const uint64_t& getPseudoMoves(int pieceType, int piecePosition, uint64_t blockerBitboard);
+
 private:
     /**
      * HashMap that holds information about how many squares you can go in a direction until you
@@ -46,7 +66,7 @@ private:
      * or, in case of pawns, the piece type + color (this is because white and black pawns go in different directions).
      * The value is an int array containing all the directions that a piece can go in.
      */
-    static std::unordered_map<int, std::vector<int> > pieceDirections;
+    static std::unordered_map<int, std::vector<int>> pieceDirections;
 
     /**
      * HashMap that contains all the squares that a sliding piece can see from any given square on the board.
@@ -59,9 +79,32 @@ private:
     */
     static std::unordered_map<int, std::array<uint64_t, 64> > attackMapBitboards;
 
+    static std::unordered_map<
+        int,                                              // piece type
+        std::unordered_map<
+            int,                                          // square 0–63
+            std::unordered_map<
+                uint64_t,                                 // blocker bitboard
+                uint64_t                                  // attack bitboard
+            >
+        >
+    > pieceLookupTable;
+
+    static std::unordered_map<int, std::array<uint64_t, 64>> relevantMasks;
+
     static std::unordered_map<int, std::array<int, 64> > initializeEdgeOfBoard();
 
     static std::unordered_map<int, std::vector<int> > initializePieceDirections();
 
     static std::unordered_map<int, std::array<uint64_t, 64> > initializeAttackMapBitboards();
+
+    static std::unordered_map<int, std::unordered_map<int, std::unordered_map<uint64_t, uint64_t>>> initializePieceLookupTable();
+
+    static std::array<std::array<uint64_t, 64>, 64> initializeSquaresBetween();
+
+    static std::vector<uint64_t> generateBlockerBitboards(uint64_t attackMap, bool isRook, int piecePos);
+
+    static std::unordered_map<int, std::array<uint64_t, 64>> initializeRelevantMasks();
+
+    static std::array<uint8_t, 64> initializeCastleMask();
 };

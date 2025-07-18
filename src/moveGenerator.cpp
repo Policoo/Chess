@@ -1,10 +1,12 @@
 #include "moveGenerator.h"
 
+#include <bit>
 #include <unordered_map>
 
 #include "move.h"
 #include "piece.h"
 #include "util/precomputedGameData.h"
+#include "util/utils.h"
 
 // <--> MOVE GENERATION <--> //
 
@@ -16,12 +18,10 @@ std::vector<Move> MoveGenerator::generateMoves(Board& board) {
     }
 
     const int turn = board.getTurn();
-    const std::vector<int>& piecePositions = board.getPiecePositions(turn);
+    uint64_t piecePositions = board.getPiecePositionsColor(turn);
 
-    for (const int& piecePosition: piecePositions) {
-        if (piecePosition == -1) {
-            continue;
-        }
+    while (piecePositions) {
+        const int piecePosition = popLSB(piecePositions);
 
         switch (board.getPieceType(piecePosition)) {
             case Piece::PAWN: {
@@ -31,21 +31,23 @@ std::vector<Move> MoveGenerator::generateMoves(Board& board) {
                 break;
             }
             case Piece::BISHOP: {
-                const std::vector<Move>& bishopMoves = generateBishopMoves(board, piecePosition);
+                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP);
                 moves.reserve(moves.size() + bishopMoves.size());
                 moves.insert(moves.end(), bishopMoves.begin(), bishopMoves.end());
                 break;
             }
             case Piece::ROOK: {
-                const std::vector<Move>& rookMoves = generateRookMoves(board, piecePosition);
+                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK);
                 moves.reserve(moves.size() + rookMoves.size());
                 moves.insert(moves.end(), rookMoves.begin(), rookMoves.end());
                 break;
             }
             case Piece::QUEEN: {
-                const std::vector<Move>& queenMoves = generateQueenMoves(board, piecePosition);
-                moves.reserve(moves.size() + queenMoves.size());
-                moves.insert(moves.end(), queenMoves.begin(), queenMoves.end());
+                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP);
+                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK);
+                moves.reserve(moves.size() + bishopMoves.size() + rookMoves.size());
+                moves.insert(moves.end(), bishopMoves.begin(), bishopMoves.end());
+                moves.insert(moves.end(), rookMoves.begin(), rookMoves.end());
                 break;
             }
             case Piece::KING: {
@@ -70,169 +72,251 @@ std::vector<Move> MoveGenerator::generateMoves(Board& board) {
     return moves;
 }
 
-std::vector<Move> MoveGenerator::generatePawnMoves(Board& board, int index) {
-    const int color = board.getPieceColor(index);
-    std::vector<Move> moves;
-    const std::vector<int>& dir = PGD::getPieceDirections(Piece::create(Piece::PAWN, color));
-
-    // see if pawn can move forward
-    if (PGD::getEdgeOfBoard(dir[0], index) > 0 && board.isEmpty(index + dir[0]) &&
-        board.isLegalMove(index, index + dir[0])) {
-        // if a pawn can only move once before hitting the edge, he is going to promote
-        if (PGD::getEdgeOfBoard(dir[0], index) == 1) {
-            moves.emplace_back(index, index + dir[0], Flag::PROMOTION, Piece::QUEEN);
-            moves.emplace_back(index, index + dir[0], Flag::PROMOTION, Piece::ROOK);
-            moves.emplace_back(index, index + dir[0], Flag::PROMOTION, Piece::BISHOP);
-            moves.emplace_back(index, index + dir[0], Flag::PROMOTION, Piece::KNIGHT);
-        }
-        else {
-            moves.emplace_back(index, index + dir[0], Flag::NONE, 0);
-        }
-    }
-
-    // if pawn can go forward 6 times it has not moved yet, check if moving 2 tiles is also possible
-    if (PGD::getEdgeOfBoard(dir[0], index) == 6 && board.isEmpty(index + dir[0]) &&
-        board.isEmpty(index + (dir[0] * 2)) &&
-        board.isLegalMove(index, index + (dir[0] * 2))) {
-        moves.emplace_back(index, index + (dir[0] * 2), Flag::NONE, 0);
-    }
-
-    // look sideways for captures
-    for (int side = 1; side < dir.size(); side++) {
-        if (PGD::getEdgeOfBoard(dir[side], index) == 0) {
-            continue;
-        }
-
-        // check for regular capture
-        if (!board.isEmpty(index + dir[side]) && !board.isColor(index + dir[side], color)
-            && board.isLegalMove(index, index + dir[side])) {
-            // if a pawn can only move forward once before hitting the edge, he is going to promote
-            if (PGD::getEdgeOfBoard(dir[0], index) == 1) {
-                moves.emplace_back(index, index + dir[side], Flag::PROMOTION, Piece::QUEEN);
-                moves.emplace_back(index, index + dir[side], Flag::PROMOTION, Piece::ROOK);
-                moves.emplace_back(index, index + dir[side], Flag::PROMOTION, Piece::BISHOP);
-                moves.emplace_back(index, index + dir[side], Flag::PROMOTION, Piece::KNIGHT);
-            }
-            else {
-                moves.emplace_back(index, index + dir[side], Flag::NONE, 0);
-            }
-        }
-
-        // from this point on we check for en passant, don't waste time if it's not possible
-        if (board.getEnPassant() == 0) {
-            continue;
-        }
-
-        // if we get here, en passant is possible on the board, so check if this pawn can take it
-        const int enPassantCapt = board.getEnPassant() + dir[0];
-        if (enPassantCapt == index + dir[side] && board.isLegalMove(index, index + dir[side], true)) {
-            moves.emplace_back(index, index + dir[side], Flag::EN_PASSANT, 0);
-        }
-    }
-
-    return moves;
-}
-
-std::vector<Move> MoveGenerator::generateKnightMoves(Board& board, const int index) {
-    return scanDirectionOnce(board, index, PGD::getPieceDirections(Piece::KNIGHT));
-}
-
-std::vector<Move> MoveGenerator::generateBishopMoves(Board& board, const int index) {
-    return scanDirectionUntilCollision(board, index, PGD::getPieceDirections(Piece::BISHOP));
-}
-
-std::vector<Move> MoveGenerator::generateRookMoves(Board& board, const int index) {
-    return scanDirectionUntilCollision(board, index, PGD::getPieceDirections(Piece::ROOK));
-}
-
-std::vector<Move> MoveGenerator::generateQueenMoves(Board& board, const int index) {
-    return scanDirectionUntilCollision(board, index, PGD::getPieceDirections(Piece::QUEEN));
-}
-
-std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index) {
-    return scanDirectionOnce(board, index, PGD::getPieceDirections(Piece::KING));
-}
-
-std::vector<Move> MoveGenerator::generateCastleMoves(Board& board, const int index) {
-    const int color = board.getTurn();
+std::vector<Move> MoveGenerator::generatePawnMoves(Board& board, const int index, bool returnEarly) {
     std::vector<Move> moves;
 
-    if (!board.canCastleKSide(color) && !board.canCastleQSide(color) || board.isCheck()) {
+    //double check, only the king can move
+    if (std::popcount(board.getCheckers()) > 1) {
         return moves;
     }
 
-    // if the tiles between king and rook are empty
-    if (board.isEmpty(index + 1) && board.isEmpty(index + 2) &&
-        board.canCastleKSide(color)) {
-        // if there is a piece at the end, and it is your rook, which hasn't moved
-        if (!board.isEmpty(index + 3) && board.isRook(index + 3) &&
-            board.isColor(index + 3, color)) {
-            // if move is legal
-            if (board.isLegalMove(index, index + 1) &&
-                board.isLegalMove(index, index + 2)) {
-                moves.emplace_back(index, index + 2, Flag::CASTLE, 0);
-            }
-        }
+    const int color = board.getPieceColor(index);
+    const std::vector<int>& dir = PGD::getPieceDirections(Piece::create(Piece::PAWN, color));
+
+    //NOTE: It is impossible for a pawn to not be able to move forward, given that there isn't a piece blocking it.
+    //      This is because if a pawn gets to the edge of the board, it promotes
+
+    const uint64_t friendly = board.getPiecePositionsColor(board.getTurn());
+    const uint64_t enemy = board.getPiecePositionsColor(abs(board.getTurn() - 1));
+    const uint64_t allPieces = friendly | enemy;
+
+    //check if push is allowed
+    uint64_t movesBB = (1LL << index + dir[0]) & ~allPieces;
+
+    const int startRank = (board.getTurn() == Piece::WHITE) ? 1 : 6;
+    const uint64_t startRankMask = rankMask(startRank);
+    const uint64_t isOnStartRank = (1LL << index) & startRankMask;
+
+    //check if double push is allowed
+    if (movesBB && isOnStartRank > 0) {
+        uint64_t doublePush = (1LL << index + (dir[0] * 2)) & ~allPieces;
+
+        if (board.isCheck())
+            doublePush &= board.getCheck();
+        if (board.getPins(index, board.getTurn()))
+            doublePush &= board.getPins(index, board.getTurn());
+
+        if (doublePush)
+            moves.emplace_back(Move(index, index + (dir[0] * 2), Flag::DBL_PUSH));
     }
 
-    // if the tiles between king and rook are empty
-    if (board.isEmpty(index - 1) && board.isEmpty(index - 2) &&
-        board.isEmpty(index - 3) && board.canCastleQSide(color)) {
-        // if there is a piece at the end, and it is your rook, which hasn't moved
-        if (!board.isEmpty(index - 4) && board.isRook(index - 4) &&
-            board.isColor(index - 4, color)) {
-            // if move is legal
-            if (board.isLegalMove(index, index - 1) &&
-                board.isLegalMove(index, index - 2)) {
-                moves.emplace_back(index, index - 2, Flag::CASTLE, 0);
-            }
+    //check captures
+    const uint64_t attackMap = PGD::getAttackMap(Piece::create(Piece::PAWN, color), index);
+    const uint64_t capturesBB = attackMap & enemy;
+    movesBB |= capturesBB;
+
+    //this is true if the en passant pawn is right next to us
+    int enPassant = board.getEnPassant();
+    if (enPassant == index - 1 || enPassant == index + 1) {
+
+        //we get the en passant direction like this because the condition is the other way around for black
+        //and I didn't want to write another if statement
+        int epDir = enPassant > index ? dir[2 - board.getTurn()] : dir[1 + board.getTurn()];
+        int end = index + epDir;
+
+        //check that the pawn doesn't wrap around the board to take en passant
+        if ((attackMap & (1LL << end)) != 0 && board.isLegalMove(index, end, Flag::EN_PASSANT))
+            moves.emplace_back(Move(index, end, Flag::EN_PASSANT));
+    }
+
+    //pawn can only move in the check line or pin line
+    if (board.isCheck())
+        movesBB &= board.getCheck();
+    if (board.getPins(index, board.getTurn()))
+        movesBB &= board.getPins(index, board.getTurn());
+
+    int promotionRank = board.getTurn() == Piece::WHITE ? 7 : 0;
+    uint64_t promotionRankMask = rankMask(promotionRank);
+
+    while (movesBB) {
+        const int to = popLSB(movesBB);
+
+        if ((promotionRankMask & (1LL << to)) > 0) {
+            moves.emplace_back(index, to, Flag::PROMO_B);
+            moves.emplace_back(index, to, Flag::PROMO_R);
+            moves.emplace_back(index, to, Flag::PROMO_N);
+            moves.emplace_back(index, to, Flag::PROMO_Q);
+            continue;
         }
+
+        Flag flag = (((1LL << to) & enemy) > 0) ? Flag::CAPTURE : Flag::QUIET;
+        moves.emplace_back(index, to, flag);
+
+        if (returnEarly)
+            return moves;
     }
 
     return moves;
 }
 
-std::vector<Move> MoveGenerator::scanDirectionOnce(Board& board, const int index, const std::vector<int>& directions) {
-    const int color = board.getTurn();
+std::vector<Move> MoveGenerator::generateKnightMoves(Board& board, const int index, bool returnEarly) {
     std::vector<Move> moves;
 
-    for (const int& dir: directions) {
-        const int count = PGD::getEdgeOfBoard(dir, index);
+    const uint64_t pseudoMoves = PGD::getAttackMap(Piece::create(Piece::KNIGHT, Piece::WHITE), index);
+    uint64_t pseudoLegalMoves = pseudoMoves & ~board.getPiecePositionsColor(board.getPieceColor(index));
 
-        if (count > 0 &&
-            (board.isEmpty(index + dir) || !board.isColor(index + dir, color))) {
-            if (board.isLegalMove(index, index + dir)) {
-                moves.emplace_back(index, index + dir, Flag::NONE, 0);
-            }
-        }
+    //if it's a double check, only king moves allowed
+    if (std::popcount(board.getCheckers()) > 1)
+        return moves;
+
+    //if it's check, you are only allowed to move on the checkline
+    if (std::popcount(board.getCheckers()) == 1)
+        pseudoLegalMoves &= board.getCheck();
+
+    //if there is a pin, only moves along that pin line are legal
+    //pinned pieces will not be able to move in checks
+    const uint64_t pin = board.getPins(index, board.getTurn());
+    if (pin)
+        pseudoLegalMoves &= pin;
+
+    while (pseudoLegalMoves) {
+        const int moveTo = popLSB(pseudoLegalMoves);
+
+        //check if we need to set the capture flag
+        const Flag flag = (board.isEmpty(moveTo)) ? Flag::QUIET : Flag::CAPTURE;
+        moves.emplace_back(index, moveTo, flag);
+
+        if (returnEarly)
+            return moves;
     }
 
     return moves;
 }
 
-std::vector<Move> MoveGenerator::scanDirectionUntilCollision(Board& board, const int index,
-                                                             const std::vector<int>& directions) {
-    const int color = board.getTurn();
+std::vector<Move> MoveGenerator::generateSlidingPieceMoves(Board& board, const int index, const int pieceType,
+                                                           bool returnEarly) {
     std::vector<Move> moves;
 
-    for (const int& dir: directions) {
-        int count = PGD::getEdgeOfBoard(dir, index);
-        int curIndex = index;
+    const uint64_t blockerBitboard = board.getPiecePositionsColor(Piece::WHITE) | board.
+                                     getPiecePositionsColor(Piece::BLACK);
 
-        while (count > 0 && (board.isEmpty(curIndex + dir) ||
-                             !board.isColor(curIndex + dir, color))) {
-            curIndex += dir;
+    //where we can move according to current blockers
+    const uint64_t pseudoMoves = PGD::getPseudoMoves(pieceType, index, blockerBitboard);
 
-            if (board.isLegalMove(index, curIndex)) {
-                moves.emplace_back(index, curIndex, Flag::NONE, 0);
-            }
+    //take out friendly piece captures
+    uint64_t pseudoLegalMoves = pseudoMoves & ~board.getPiecePositionsColor(board.getPieceColor(index));
 
-            if (!board.isEmpty(curIndex) && !board.isColor(curIndex, color)) {
+    //if it's a double check, only king moves allowed
+    if (std::popcount(board.getCheckers()) > 1)
+        return moves;
+
+    //if it's check, you are only allowed to move on the checkline
+    if (std::popcount(board.getCheckers()) == 1)
+        pseudoLegalMoves &= board.getCheck();
+
+    //if there is a pin, only moves along that pin line are legal
+    //pinned pieces will not be able to move in checks
+    const uint64_t pin = board.getPins(index, board.getTurn());
+    if (pin)
+        pseudoLegalMoves &= pin;
+
+    while (pseudoLegalMoves) {
+        const int moveTo = popLSB(pseudoLegalMoves);
+
+        //check if we need to set the capture flag
+        const Flag flag = (board.isEmpty(moveTo)) ? Flag::QUIET : Flag::CAPTURE;
+        moves.emplace_back(index, moveTo, flag);
+
+        if (returnEarly)
+            return moves;
+    }
+
+    return moves;
+}
+
+std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index, bool returnEarly) {
+    const uint64_t pseudoMoves = PGD::getAttackMap(Piece::create(Piece::KING, Piece::WHITE), index);
+    uint64_t pseudoLegalMoves = pseudoMoves & ~board.getPiecePositionsColor(board.getPieceColor(index));
+
+    if (board.isCheck()) {
+        //this is all for extending the check line
+        uint64_t checkers = board.getCheckers();
+        while (checkers) {
+            int checkerIndex = popLSB(checkers);
+
+            switch (board.getPieceType(checkerIndex)) {
+                case Piece::KING:
+                case Piece::KNIGHT:
+                    pseudoLegalMoves &= ~PGD::getAttackMap(Piece::create(board.getPieceType(checkerIndex), Piece::WHITE), checkerIndex);
+                break;
+               case Piece::PAWN:
+                    pseudoLegalMoves &= ~PGD::getAttackMap(Piece::create(Piece::PAWN, abs(board.getTurn() - 1)), checkerIndex);
+                break;
+                default:
+                    //sliding pieces
+                        uint64_t blockerBB = board.getPiecePositionsColor(Piece::WHITE) | board.getPiecePositionsColor(Piece::BLACK);
+                //remove king from blockers
+                blockerBB &= ~(1LL << index);
+                uint64_t pieceView = PGD::getPseudoMoves(board.getPieceType(checkerIndex), checkerIndex, blockerBB);
+                pseudoLegalMoves &= ~(pieceView);
                 break;
             }
-
-            count--;
         }
+    }
+
+    uint64_t legalMoves = pseudoLegalMoves & ~board.getColorAttackMap(abs(board.getTurn() - 1));
+
+    std::vector<Move> moves;
+    while (legalMoves) {
+        const int moveTo = popLSB(legalMoves);
+
+        //check if we need to set the capture flag
+        const Flag flag = (board.isEmpty(moveTo)) ? Flag::QUIET : Flag::CAPTURE;
+        moves.push_back(Move(index, moveTo, flag));
+
+        if (returnEarly)
+            return moves;
+    }
+
+    return moves;
+}
+
+std::vector<Move> MoveGenerator::generateCastleMoves(Board& board, const int index, bool returnEarly) {
+    const int color = board.getTurn();
+    std::vector<Move> moves;
+
+    if (board.isCheck()) {
+        return moves;
+    }
+
+    const uint64_t friendly = board.getPiecePositionsColor(board.getTurn());
+    const uint64_t enemy = board.getPiecePositionsColor(abs(board.getTurn() - 1));
+
+    const uint64_t allPieces = friendly | enemy;
+    const uint64_t enemyAttackMap = board.getColorAttackMap(abs(board.getTurn() - 1));
+
+    if (board.canCastleKSide(color)) {
+        uint64_t between = betweenMask(index, index + 3);
+
+        //if the king would not be attacked while castling and there is no piece between king and rook
+        if ((between & enemyAttackMap) == 0 && (between & allPieces) == 0)
+            moves.emplace_back(index, index + 2, Flag::CASTLE_K);
+    }
+
+    if (board.canCastleQSide(color)) {
+        uint64_t between = betweenMask(index, index - 4);
+
+        //no pieces allowed between king and rook
+        if ((between & allPieces) != 0) {
+            return moves;
+        }
+
+        //index - 3 can be a check, it's fine
+        between &= ~(1LL << index - 3);
+
+        //if the king would not be attacked while castling, it's ok
+        if ((between & enemyAttackMap) == 0)
+            moves.emplace_back(index, index - 2, Flag::CASTLE_Q);
     }
 
     return moves;
@@ -243,53 +327,58 @@ std::vector<Move> MoveGenerator::scanDirectionUntilCollision(Board& board, const
 // <--> CHECKING IF LEGAL MOVES EXIST <--> //
 
 bool MoveGenerator::legalMovesExist(Board& board) {
+    std::vector<Move> moves;
+
     if (board.isGameOver()) {
         return false;
     }
 
     const int turn = board.getTurn();
-    const std::vector<int>& piecePositions = board.getPiecePositions(turn);
+    uint64_t piecePositions = board.getPiecePositionsColor(turn);
 
-    for (const int& piecePosition: piecePositions) {
-        if (piecePosition == -1) {
-            continue;
-        }
+    while (piecePositions) {
+        const int piecePosition = popLSB(piecePositions);
 
         switch (board.getPieceType(piecePosition)) {
             case Piece::PAWN: {
-                if (checkPawnMoves(board, piecePosition)) {
+                const std::vector<Move>& pawnMoves = generatePawnMoves(board, piecePosition, true);
+                if (pawnMoves.size() > 0)
                     return true;
-                }
                 break;
             }
             case Piece::BISHOP: {
-                if (checkBishopMoves(board, piecePosition)) {
+                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(
+                        board, piecePosition, Piece::BISHOP, true);
+                if (bishopMoves.size() > 0)
                     return true;
-                }
                 break;
             }
             case Piece::ROOK: {
-                if (checkRookMoves(board, piecePosition)) {
+                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK, true);
+                if (rookMoves.size() > 0)
                     return true;
-                }
                 break;
             }
             case Piece::QUEEN: {
-                if (checkQueenMoves(board, piecePosition)) {
+                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(
+                        board, piecePosition, Piece::BISHOP, true);
+                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(
+                        board, piecePosition, Piece::ROOK, true);
+                if (bishopMoves.size() > 0 || rookMoves.size() > 0)
                     return true;
-                }
                 break;
             }
             case Piece::KING: {
-                if (checkKingMoves(board, piecePosition) || checkCastleMoves(board, piecePosition)) {
+                const std::vector<Move>& kingMoves = generateKingMoves(board, piecePosition, true);
+                const std::vector<Move>& castleMoves = generateCastleMoves(board, piecePosition, true);
+                if (kingMoves.size() > 0 || castleMoves.size() > 0)
                     return true;
-                }
                 break;
             }
             case Piece::KNIGHT: {
-                if (checkKnightMoves(board, piecePosition)) {
+                const std::vector<Move>& knightMoves = generateKnightMoves(board, piecePosition, true);
+                if (knightMoves.size() > 0)
                     return true;
-                }
                 break;
             }
         }
@@ -297,154 +386,3 @@ bool MoveGenerator::legalMovesExist(Board& board) {
 
     return false;
 }
-
-bool MoveGenerator::checkPawnMoves(Board& board, const int index) {
-    const int color = board.getPieceColor(index);
-    const std::vector<int>& dir = PGD::getPieceDirections(Piece::create(Piece::PAWN, color));
-
-    // see if pawn can move forward
-    if (PGD::getEdgeOfBoard(dir[0], index) > 0 && board.isEmpty(index + dir[0]) &&
-        board.isLegalMove(index, index + dir[0])) {
-        return true;
-    }
-
-    // if pawn can go forward 6 times it has not moved yet, check if moving 2 tiles is also possible
-    if (PGD::getEdgeOfBoard(dir[0], index) == 6 && board.isEmpty(index + dir[0]) &&
-        board.isEmpty(index + (dir[0] * 2)) &&
-        board.isLegalMove(index, index + (dir[0] * 2))) {
-        return true;
-    }
-
-    // look sideways for captures
-    for (int side = 1; side < dir.size(); side++) {
-        if (PGD::getEdgeOfBoard(dir[side], index) == 0) {
-            continue;
-        }
-
-        // check for regular capture
-        if (!board.isEmpty(index + dir[side]) && !board.isColor(index + dir[side], color)
-            && board.isLegalMove(index, index + dir[side])) {
-            // if a pawn can only move forward once before hitting the edge, he is going to promote
-            return true;
-        }
-
-        // from this point on we check for en passant, don't waste time if it's not
-        // possible
-        if (board.getEnPassant() == 0) {
-            continue;
-        }
-
-        // if we get here, en passant is possible on the board, so check if this pawn can take it
-        if (const int enPassantCapt = board.getEnPassant() + dir[0];
-            enPassantCapt == index + dir[side] && board.isLegalMove(index, index + dir[side])) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool MoveGenerator::checkKnightMoves(Board& board, const int index) {
-    return checkDirectionOnce(board, index, PGD::getPieceDirections(Piece::KNIGHT));
-}
-
-bool MoveGenerator::checkBishopMoves(Board& board, const int index) {
-    return checkDirectionUntilCollision(board, index, PGD::getPieceDirections(Piece::BISHOP));
-}
-
-bool MoveGenerator::checkRookMoves(Board& board, const int index) {
-    return checkDirectionUntilCollision(board, index,
-                                        PGD::getPieceDirections(Piece::ROOK));
-}
-
-bool MoveGenerator::checkQueenMoves(Board& board, const int index) {
-    return checkDirectionUntilCollision(board, index,
-                                        PGD::getPieceDirections(Piece::QUEEN));
-}
-
-bool MoveGenerator::checkKingMoves(Board& board, const int index) {
-    return checkDirectionOnce(board, index, PGD::getPieceDirections(Piece::KING));
-}
-
-bool MoveGenerator::checkCastleMoves(Board& board, const int index) {
-    const int color = board.getTurn();
-
-    if (!board.canCastleKSide(color) && !board.canCastleQSide(color)) {
-        return false;
-    }
-
-    // if the tiles between king and rook are empty
-    if (board.isEmpty(index + 1) && board.isEmpty(index + 2) &&
-        board.canCastleKSide(color)) {
-        // if there is a piece at the end, and it is your rook, which hasn't moved
-        if (!board.isEmpty(index + 3) && board.isRook(index + 3) &&
-            board.isColor(index + 3, color)) {
-            // if move is legal
-            if (board.isLegalMove(index, index + 1) &&
-                board.isLegalMove(index, index + 2)) {
-                return true;
-            }
-        }
-    }
-
-    // if the tiles between king and rook are empty
-    if (board.isEmpty(index - 1) && board.isEmpty(index - 2) &&
-        board.isEmpty(index - 3) && board.canCastleQSide(color)) {
-        // if there is a piece at the end, and it is your rook, which hasn't moved
-        if (!board.isEmpty(index - 4) && board.isRook(index - 4) &&
-            board.isColor(index - 4, color)) {
-            // if move is legal
-            if (board.isLegalMove(index, index - 1) &&
-                board.isLegalMove(index, index - 2)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool MoveGenerator::checkDirectionOnce(Board& board, const int index, const std::vector<int>& directions) {
-    const int color = board.getTurn();
-
-    for (const int& dir: directions) {
-        const int count = PGD::getEdgeOfBoard(dir, index);
-
-        if (count > 0 &&
-            (board.isEmpty(index + dir) || !board.isColor(index + dir, color))) {
-            if (board.isLegalMove(index, index + dir)) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool MoveGenerator::checkDirectionUntilCollision(Board& board, const int index, const std::vector<int>& directions) {
-    const int color = board.getTurn();
-
-    for (const int& dir: directions) {
-        int count = PGD::getEdgeOfBoard(dir, index);
-        int curIndex = index;
-
-        while (count > 0 && (board.isEmpty(curIndex + dir) ||
-                             !board.isColor(curIndex + dir, color))) {
-            curIndex += dir;
-
-            if (board.isLegalMove(index, curIndex)) {
-                return true;
-            }
-
-            if (!board.isEmpty(curIndex) && !board.isColor(curIndex, color)) {
-                break;
-            }
-
-            count--;
-        }
-    }
-
-    return false;
-}
-
-// <--> CHECKING IF LEGAL MOVES EXIST <--> //

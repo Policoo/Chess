@@ -3,12 +3,15 @@
 #include <string>
 #include "piece.h"
 
-enum class Flag {
-    NONE,
-    CASTLE,
-    EN_PASSANT,
-    PROMOTION
+enum Flag : uint8_t {
+    QUIET = 0,
+    CAPTURE = 1,
+    EN_PASSANT = 2,
+    DBL_PUSH = 3,
+    PROMO_N = 4, PROMO_B = 5, PROMO_R = 6, PROMO_Q = 7,
+    CASTLE_K = 8, CASTLE_Q = 9
 };
+
 
 class Move {
 public:
@@ -18,10 +21,9 @@ public:
      * @param start - Start square index of the move.
      * @param end - End square index of the move.
      * @param flag - Flag of the move.
-     * @param promotion - Promotion piece, only valid if flag is PROMOTION, otherwise
      * ignored.
     */
-    Move(int start, int end, Flag flag, int promotion);
+    Move(int start, int end, Flag flag);
 
     Move() = default;
 
@@ -59,8 +61,7 @@ public:
     std::string toString() const;
 
 private:
-    int start_;
-    int end_;
-    Flag flag_;
-    int promotion_;
+    int from;
+    int to;
+    Flag moveFlag;
 };

@@ -6,15 +6,16 @@
 */
 class Piece {
 public:
+    static constexpr int WHITE = 0;
+    static constexpr int BLACK = 1;
+
     static constexpr int PAWN = 1;
-    static constexpr int KNIGHT = 2;
-    static constexpr int KING = 3;
+    static constexpr int KING = 2;
+    static constexpr int KNIGHT = 3;
     static constexpr int BISHOP = 4;
     static constexpr int ROOK = 5;
     static constexpr int QUEEN = 6;
 
-    static constexpr int WHITE = 8;
-    static constexpr int BLACK = 16;
 
     /**
      * @brief Creates a piece with the given color and type.
@@ -42,35 +43,6 @@ public:
     static int color(const int piece);
 
     /**
-     * @brief Does bit operations on the piece integer to determine the index associated
-     * with it. Accessing arrays in the board class with this index will lead to information
-     * about this piece, such as it's position and attack map.
-     *
-     * @param piece Piece to calculate the index of.
-     * @return An integer equal to a piece type, for example Piece::ROOK
-    */
-    static int index(const int piece);
-
-    /**
-     * @brief Does bit operations on the piece integer to determine its color and type.
-     *
-     * @param piece Piece to get the color and type of.
-     * @return An piece integer with all the same properties as the given piece, except for
-     * the index.
-    */
-    static int ignoreIndex(const int piece);
-
-    /**
-     * @brief Does bit operations on the piece integer to encode an index in it.
-     *
-     * @param piece - Piece integer to encode the index into
-     * @param index - Index to encode into the piece integer.
-     * @return A piece integer with the same color and type, but with the index also
-     * encoded inside.
-    */
-    static int setIndex(const int piece, const int index);
-
-    /**
      * @brief Determines a char to represent the piece.
      *
      * @param piece - Piece to represent into a char.
@@ -79,7 +51,6 @@ public:
     static char toString(const int piece);
 
 private:
-    static constexpr int TYPE_MASK = 0x7;
-    static constexpr int COLOR_MASK = 0x18;
-    static constexpr int INDEX_MASK = 0x3E0;
+    static constexpr int TYPE_MASK = 0b1110;
+    static constexpr int COLOR_MASK = 0x0001;
 };

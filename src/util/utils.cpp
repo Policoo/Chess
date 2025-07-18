@@ -36,6 +36,29 @@ std::string bitboardString(uint64_t bitboard) {
     return result;
 }
 
+#ifdef _MSC_VER
+  #include <intrin.h>
+  #pragma intrinsic(_BitScanForward64)
+  inline int bitScanForward(uint64_t bb) {
+      // MSVC: returns the index of the least significant 1-bit in bb
+      unsigned long idx;
+      _BitScanForward64(&idx, bb);
+      return static_cast<int>(idx);
+  }
+#else
+  // GCC / Clang have a built-in for exactly this:
+  inline int bitScanForward(uint64_t bb) {
+      // caller must ensure bb != 0
+      return __builtin_ctzll(bb);
+  }
+#endif
+
+int popLSB(uint64_t& bitboard) {
+    const int index = bitScanForward(bitboard);
+    bitboard &= bitboard - 1;
+    return index;
+}
+
 
 std::string getChessCoords(int index) {
     int startLetterAscii = (index % 8) + 97;
@@ -58,14 +81,18 @@ std::unordered_map<std::string, int> parsePerftResults(const std::string& result
     std::istringstream iss(results);
     std::string line;
 
-    // Parse the lines containing moves and counts
     while (std::getline(iss, line) && !line.empty()) {
-        size_t pos = line.find(':');
-        if (pos != std::string::npos) {
-            std::string move = line.substr(0, pos);
-            int count = std::stoi(line.substr(pos + 1));
-            result[move] = count;
-        }
+        // skip any line that contains "info"
+        if (line.find("info") != std::string::npos)
+            continue;
+
+        auto pos = line.find(':');
+        if (pos == std::string::npos)
+            continue;
+
+        std::string move  = line.substr(0, pos);
+        int count = std::stoi(line.substr(pos + 1));
+        result[move] = count;
     }
 
     return result;

@@ -16,6 +16,10 @@ std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenStri
             continue;
         }
 
+        if (move.toString() == "f3f2") {
+            std::cout << "here" << std::endl;
+        }
+
         board->makeMove(move, true);
         const int movePositions = countPositions(*board, depth - 1);
         board->undoMove(move);
