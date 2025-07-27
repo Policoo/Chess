@@ -29,6 +29,7 @@ Chess::Chess(QWidget* parent) :
     boardWidget = new GameWidget(this);
     connect(boardWidget, &GameWidget::moveMadeSignal, this, &Chess::moveMade);
     connect(boardWidget, &GameWidget::perftResultsReady, this, &Chess::perftResultsReady);
+    connect(boardWidget, &GameWidget::engineMatchResultsReady, this, &Chess::showEngineMatchResults);
 
     dialogWidget = new DialogWidget(this);
 
@@ -115,15 +116,19 @@ void Chess::goPerft(const std::string& depth) {
     }
 }
 
-void Chess::perftResultsReady(const std::vector<std::string> results) {
+void Chess::perftResultsReady(const std::vector<std::string> results) const {
     dialogWidget->displayCountResults(results);
 }
 
 
 void Chess::setOpponent(std::string opponentChoice) {
-    std::cout << opponentChoice << std::endl;
+    boardWidget->setOpponent(opponentChoice);
 }
 
 void Chess::startEngineMatch(std::string engine1, std::string engine2) {
-    std::cout << engine1 << ", " << engine2 << std::endl;
+    boardWidget->startEngineMatch(engine1, engine2);
+}
+
+void Chess::showEngineMatchResults(std::string results) const {
+    dialogWidget->displayMessage(results);
 }

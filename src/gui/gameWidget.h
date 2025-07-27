@@ -8,6 +8,7 @@
 
 #include "../board.h"
 #include "../move.h"
+#include "../engines/engine.h"
 
 class GameWidget : public QWidget {
     Q_OBJECT
@@ -41,6 +42,8 @@ signals:
 
     void perftResultsReady(std::vector<std::string> results);
 
+    void engineMatchResultsReady(std::string results);
+
 protected:
     void mousePressEvent(QMouseEvent* event) override;
 
@@ -56,10 +59,13 @@ private:
     std::vector<QPixmap> pieceImages;
 
     Board* board;
+    Engine* opponent;
+
     std::vector<Move> legalMoves;
     std::vector<Move> moveHistory;
     std::vector<int> pieceMoves;
     std::vector<int> promotionTiles;
+
     Move promotionMove;
     int lastClick;
     int perspective;

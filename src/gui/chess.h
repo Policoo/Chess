@@ -29,11 +29,13 @@ public slots:
 
     void goPerft(const std::string &depth);
 
-    void perftResultsReady(const std::vector<std::string> results);
+    void perftResultsReady(const std::vector<std::string> results) const;
 
     void setOpponent(std::string opponentChoice);
 
     void startEngineMatch(std::string engine1, std::string engine2);
+
+    void showEngineMatchResults(std::string results) const;
 
 private:
     QWidget *mainWidget;

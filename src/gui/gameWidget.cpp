@@ -1,4 +1,3 @@
-#include <QHBoxLayout>
 #include <QThread>
 #include <QVBoxLayout>
 #include <QDir>
@@ -13,6 +12,7 @@
 #include "../moveGenerator.h"
 #include "../piece.h"
 #include "../util/utils.h"
+#include "../engines/engineRegistry.h"
 
 // <--> INITIALIZATION AND COLORING <--> //
 
@@ -53,6 +53,7 @@ GameWidget::GameWidget(QWidget* parent) :
     vLayout->addWidget(boardWidget);
     vLayout->addWidget(eastWidget);
 
+    opponent = nullptr;
     perspective = Piece::WHITE;
     constructBoard();
     legalMoves = MoveGenerator::generateMoves(*board);
@@ -374,19 +375,26 @@ void GameWidget::handleClick(int index) {
 
         return;
     }
-    else {
-        //if we get here that means the user clicked on a tile that is not a move, but an opponents tile
-        resetColors();
-        highlightClick(index);
-        pieceMoves.clear();
-        lastClick = -1;
-    }
+
+    //if we get here that means the user clicked on a tile that is not a move, but an opponents tile
+    resetColors();
+    highlightClick(index);
+    pieceMoves.clear();
+    lastClick = -1;
 }
 
 void GameWidget::makeMove(Move move) {
     board->makeMove(move);
     moveHistory.push_back(move);
     updateBoard();
+
+    if (opponent != nullptr && board->getTurn() != perspective) {
+        Move bestMove = opponent->bestMove(*board, 0);
+
+        board->makeMove(bestMove);
+        moveHistory.push_back(bestMove);
+        updateBoard();
+    }
 
     legalMoves = MoveGenerator::generateMoves(*board);
     emit moveMadeSignal();
@@ -395,6 +403,13 @@ void GameWidget::makeMove(Move move) {
 void GameWidget::undoMove() {
     if (moveHistory.empty()) {
         return;
+    }
+
+    //undo the engine move too
+    if (opponent != nullptr) {
+        Move move = moveHistory.back();
+        moveHistory.pop_back();
+        board->undoMove(move);
     }
 
     Move move = moveHistory.back();
@@ -460,14 +475,85 @@ void GameWidget::perftDone(std::vector<std::string> results) {
     emit perftResultsReady(results);
 }
 
-
 void GameWidget::setOpponent(std::string opponentChoice) {
-    //TODO: Implement this
+    for (const auto& engine : engines) {
+        if (engine->name() != opponentChoice) {
+            continue;
+        }
+
+        opponent = engine.get();
+        if (board->getTurn() != perspective) {
+            Move move = opponent->bestMove(*board, 0);
+
+            board->makeMove(move);
+            moveHistory.push_back(move);
+            updateBoard();
+
+            legalMoves = MoveGenerator::generateMoves(*board);
+        }
+
+        return;
+    }
+
+    opponent = nullptr;
 }
 
 void GameWidget::startEngineMatch(std::string engine1, std::string engine2) {
-    //TODO: Implement this
+    Engine* whiteEngine = nullptr;
+    Engine* blackEngine = nullptr;
+
+    for (const auto& up : engines) {
+        if (up->name() == engine1) whiteEngine = up.get();
+        if (up->name() == engine2) blackEngine = up.get();
+    }
+    if (!whiteEngine || !blackEngine) {
+        std::cerr << "Error: could not find engine(s) "
+                  << engine1 << " or " << engine2 << "\n";
+        return;
+    }
+
+    const int nrGames     = 1000;
+    const int timePerMove = 100;  // ms
+
+    int whiteWins = 0, blackWins = 0, draws = 0;
+
+    std::string report;
+
+    for (int i = 0; i < nrGames; ++i) {
+        if (i % 100 == 0) {
+            std::cout << "Starting game " + std::to_string(i) + "\n";
+        }
+
+        Board board;
+        bool whiteToMove = (i % 2 == 0);
+
+        while (!board.isGameOver()) {
+            Engine* cur = whiteToMove ? whiteEngine : blackEngine;
+            Move m = cur->bestMove(board, timePerMove);
+            board.makeMove(m);
+            whiteToMove = !whiteToMove;
+        }
+
+        if (board.isCheck()) {
+            if (abs(board.getTurn()) == Piece::WHITE) {
+                whiteWins++;
+            } else {
+                blackWins++;
+            }
+        } else {
+            draws++;
+        }
+    }
+
+    report += "Match complete:\n";
+    report += "  " + engine1 + " (as White) wins: " + std::to_string(whiteWins) + "\n";
+    report += "  " + engine2 + " (as Black) wins: " + std::to_string(blackWins) + "\n";
+    report += "  draws: "                      + std::to_string(draws)      + "\n";
+    std::cout << report;
+
+    emit(engineMatchResultsReady(report));
 }
+
 
 // <--> BUTTONS <--> //
 

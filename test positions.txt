@@ -46,7 +46,7 @@ Test 12
       depth: 6
       8/8/1k6/2b5/2pP4/8/5K2/8 b - d3 0 1
 
-Test 13 - FAIL
+Test 13
       depth: 6
       5k2/8/8/8/8/8/8/4K2R w K - 0 1
 

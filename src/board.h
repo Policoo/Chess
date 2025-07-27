@@ -90,6 +90,13 @@ public:
 
     bool isGameOver() const;
 
+    /**
+     * Determines if the king is in check and has no legal moves.
+     *
+     * @return true if its checkmate, false otherwise.
+     */
+    bool isCheckMate();
+
     uint64_t &getPiecePositions(int piece);
 
     uint64_t& getPiecePositionsColor(int color);
@@ -167,13 +174,6 @@ private:
      * Updates the gameOver variable according to the current game state
      */
     void checkGameOver();
-
-    /**
-     * Determines if the king is in check and has no legal moves.
-     *
-     * @return true if its checkmate, false otherwise.
-     */
-    bool isCheckMate();
 
     /**
      * Determines if there is a stalemate.

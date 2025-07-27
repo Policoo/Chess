@@ -1,9 +1,10 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
-#include "board.h"
-#include "moveGenerator.h"
+#include "../board.h"
+
 
 class Counter {
 public:

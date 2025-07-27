@@ -272,7 +272,7 @@ std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index
 
         //check if we need to set the capture flag
         const Flag flag = (board.isEmpty(moveTo)) ? Flag::QUIET : Flag::CAPTURE;
-        moves.push_back(Move(index, moveTo, flag));
+        moves.emplace_back(index, moveTo, flag);
 
         if (returnEarly)
             return moves;

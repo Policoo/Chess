@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "../util/utils.h"
+#include "../engines/counter.h"
 
 EngineWorker::EngineWorker(QObject* parent) :
     QObject(parent) {
@@ -79,5 +80,4 @@ void EngineWorker::bestMove(Board& board) {
 
 
 void EngineWorker::setEngine(std::string engine) {
-
 }

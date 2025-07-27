@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include "counter.h"
-#include "move.h"
+#include "../move.h"
+#include "../moveGenerator.h"
 
 std::unordered_map<std::string, int> Counter::goPerft(const std::string& fenString, int depth) {
     const auto board = new Board(fenString);

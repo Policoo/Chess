@@ -48,8 +48,8 @@ add_executable(Chess
 
     # Game‑logic
     src/board.cpp
-    src/counter.cpp          src/counter.h
-    src/engine.h
+        src/engines/counter.cpp src/engines/counter.h
+        src/engines/engine.h
     src/move.cpp             src/move.h
     src/moveGenerator.cpp    src/moveGenerator.h
     src/piece.cpp            src/piece.h
@@ -58,6 +58,9 @@ add_executable(Chess
     src/util/zobrist.cpp     src/util/zobrist.h
 
     ${RESOURCE_FILES}
+        src/engines/random/random.cpp
+        src/engines/random/random.h
+        src/engines/engineRegistry.h
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)

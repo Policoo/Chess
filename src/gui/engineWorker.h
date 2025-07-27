@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "../counter.h"
 #include "../move.h"
 #include "../board.h"
 

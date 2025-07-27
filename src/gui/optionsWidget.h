@@ -29,8 +29,6 @@ signals:
     void startEngineMatchSignal(std::string engine1, std::string engine2);
 
 private:
-    std::vector<QString> availableEngines;
-
     QLayout* optionsLayout;
 
     QPushButton* debugButton;

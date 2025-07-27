@@ -4,6 +4,9 @@
 
 #include "optionsWidget.h"
 
+#include "../engines/engine.h"
+#include "../engines/engineRegistry.h"
+
 // <--> INITIALIZATION <--> //
 
 OptionsWidget::OptionsWidget(QWidget* parent) :
@@ -17,8 +20,6 @@ OptionsWidget::OptionsWidget(QWidget* parent) :
     optionsLayout->setSpacing(1);
     optionsLayout->setContentsMargins(0, 0, 0, 0);
     optionsLayout->setAlignment(Qt::AlignTop);
-
-    availableEngines = { "Random", "Greedy" };
 
     constructTopButtons();
     constructFenWidget();
@@ -288,8 +289,8 @@ void OptionsWidget::constructOpponentWidget() {
             );
 
     opponentChoice->addItem("Yourself :(");
-    for (const auto& option: availableEngines) {
-        opponentChoice->addItem(option);
+    for (const auto& option: engines) {
+        opponentChoice->addItem(option->name().data());
     }
     connect(opponentChoice, &QComboBox::currentIndexChanged, this, &OptionsWidget::setOpponent);
     layout->addWidget(opponentChoice);
@@ -336,8 +337,8 @@ void OptionsWidget::constructMatchWidget() {
             "   border-left-style: solid;"
             "}"
             );
-    for (const auto& option: availableEngines) {
-        engine1->addItem(option);
+    for (const auto& option: engines) {
+        engine1->addItem(option->name().data());
     }
     horizontalLayout->addWidget(engine1);
 
@@ -372,8 +373,8 @@ void OptionsWidget::constructMatchWidget() {
             "   border-left-style: solid;"
             "}"
             );
-    for (const auto& option: availableEngines) {
-        engine2->addItem(option);
+    for (const auto& option: engines) {
+        engine2->addItem(option->name().data());
     }
     horizontalLayout->addWidget(engine2);
 
@@ -474,17 +475,15 @@ void OptionsWidget::goPerft() {
 }
 
 void OptionsWidget::setOpponent() {
-    int selectedIndex = opponentChoice->currentIndex();
-    std::string choice = (selectedIndex == 0) ? "" : availableEngines[selectedIndex - 1].toStdString();
-    emit setOpponentSignal(choice);
+    emit setOpponentSignal(opponentChoice->currentText().toStdString());
 }
 
 void OptionsWidget::startEngineMatch() {
-    int engine1Choice = engine1->currentIndex();
-    int engine2Choice = engine2->currentIndex();
+    QString engine1Choice = engine1->currentText();
+    QString engine2Choice = engine2->currentText();
 
-    emit startEngineMatchSignal(availableEngines[engine1Choice].toStdString(),
-                                availableEngines[engine2Choice].toStdString());
+    emit startEngineMatchSignal(engine1Choice.toStdString(),
+                                engine2Choice.toStdString());
 }
 
 // <--> BUTTON PRESSES AND STUFF <--> //
