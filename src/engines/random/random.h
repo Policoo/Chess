@@ -8,6 +8,6 @@ public:
 
     std::string name() const override;
     Move bestMove(Board& board, int time) override;
-    int evaluate(const Board& board) override;
+    int evaluate(Board& board) override;
     void stop() override;
 };

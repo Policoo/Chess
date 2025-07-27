@@ -23,7 +23,7 @@ public:
      */
     virtual Move bestMove(Board &board, int time) = 0;
 
-    virtual int evaluate(const Board &board) = 0;
+    virtual int evaluate(Board &board) = 0;
 
     virtual void stop() {}
 };

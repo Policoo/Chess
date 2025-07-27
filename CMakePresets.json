@@ -1,131 +1,201 @@
 {
   "version": 3,
-  "configurePresets": [
-    {
-      "name": "debug",
-      "displayName": "Debug",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/bin/Debug/intermediate",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug"
-      }
-    },
-    {
-      "name": "release",
-      "displayName": "Release",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/bin/Release/intermediate",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
-        "CMAKE_C_FLAGS_RELEASE": "/Ox /DNDEBUG /GL",
-        "CMAKE_CXX_FLAGS_RELEASE": "/Ox /DNDEBUG /GL",
-        "CMAKE_EXE_LINKER_FLAGS": "/LTCG",
-        "CMAKE_SHARED_LINKER_FLAGS": "/LTCG",
-        "CMAKE_STATIC_LINKER_FLAGS": "/LTCG"
-      }
-    },
-    {
-      "name": "debug-clang",
-      "displayName": "Debug (Clang++)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/bin/Debug-Clang/intermediate",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
-        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -Wall -Wextra"
-      }
-    },
-    {
-      "name": "release-clang",
-      "displayName": "Release (Clang++)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/bin/Release-Clang/intermediate",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_COMPILER": "clang",
-        "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto",
-        "CMAKE_EXE_LINKER_FLAGS": "-flto",
-        "CMAKE_SHARED_LINKER_FLAGS": "-flto"
-      }
-    },
-    {
-        "name": "debug-gcc",
-        "displayName": "Debug (GCC)",
-        "generator": "Ninja",
-        "binaryDir": "${sourceDir}/bin/Debug-GCC/intermediate",
-        "cacheVariables": {
-            "CMAKE_BUILD_TYPE": "Debug",
-            "CMAKE_C_COMPILER": "gcc",
-            "CMAKE_CXX_COMPILER": "g++",
-            "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
-            "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
-            "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
-            "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -Wall -Wextra"
+    "configurePresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Debug/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug"
+            }
+        },
+        {
+            "name": "profile",
+            "displayName": "Profile (MSVC)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Profile/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile",
+
+                // MSVC: optimized + PDBs + keep frame pointers, no LTO
+                "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "ProgramDatabase",
+                "CMAKE_C_FLAGS_RELWITHDEBINFO": "/O2 /Zi /Zo /Oy- /DNDEBUG",
+                "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/O2 /Zi /Zo /Oy- /DNDEBUG",
+                "CMAKE_EXE_LINKER_FLAGS": "/DEBUG",
+                "CMAKE_SHARED_LINKER_FLAGS": "/DEBUG"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Release/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release",
+                "CMAKE_C_FLAGS_RELEASE": "/Ox /DNDEBUG /GL",
+                "CMAKE_CXX_FLAGS_RELEASE": "/Ox /DNDEBUG /GL",
+                "CMAKE_EXE_LINKER_FLAGS": "/LTCG",
+                "CMAKE_SHARED_LINKER_FLAGS": "/LTCG",
+                "CMAKE_STATIC_LINKER_FLAGS": "/LTCG"
+            }
+        },
+        {
+            "name": "debug-clang",
+            "displayName": "Debug (Clang++)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Debug-Clang/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-Clang",
+                "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -Wall -Wextra"
+            }
+        },
+        {
+            "name": "release-clang",
+            "displayName": "Release (Clang++)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Release-Clang/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-Clang",
+                "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto",
+                "CMAKE_EXE_LINKER_FLAGS": "-flto",
+                "CMAKE_SHARED_LINKER_FLAGS": "-flto"
+            }
+        },
+        {
+            "name": "profile-clang",
+            "displayName": "Profile (Clang++)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Profile-Clang/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-Clang",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-Clang",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-Clang",
+
+                // Clang: optimized + symbols + frame pointers, no LTO
+                "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG",
+                "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG"
+            }
+        },
+        {
+            "name": "debug-gcc",
+            "displayName": "Debug (GCC)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Debug-GCC/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Debug-GCC",
+                "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -Wall -Wextra"
+            }
+        },
+        {
+            "name": "release-gcc",
+            "displayName": "Release (GCC)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Release-GCC/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
+                "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto",
+                "CMAKE_EXE_LINKER_FLAGS": "-flto",
+                "CMAKE_SHARED_LINKER_FLAGS": "-flto"
+            }
+        },
+        {
+            "name": "profile-gcc",
+            "displayName": "Profile (GCC)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/bin/Profile-GCC/intermediate",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-GCC",
+                "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-GCC",
+                "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-GCC",
+
+                // GCC: optimized + symbols + frame pointers, no LTO
+                "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG",
+                "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG"
+            }
         }
-    },
-    {
-        "name": "release-gcc",
-        "displayName": "Release (GCC)",
-        "generator": "Ninja",
-        "binaryDir": "${sourceDir}/bin/Release-GCC/intermediate",
-        "cacheVariables": {
-            "CMAKE_BUILD_TYPE": "Release",
-            "CMAKE_C_COMPILER": "gcc",
-            "CMAKE_CXX_COMPILER": "g++",
-            "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
-            "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
-            "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Release-GCC",
-            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -flto",
-            "CMAKE_EXE_LINKER_FLAGS": "-flto",
-            "CMAKE_SHARED_LINKER_FLAGS": "-flto"
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug Build",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "displayName": "Release Build",
+            "configurePreset": "release"
+        },
+        {
+            "name": "profile",
+            "displayName": "Profile Build (MSVC)",
+            "configurePreset": "profile"
+        },
+        {
+            "name": "debug-clang",
+            "displayName": "Debug Build (Clang++)",
+            "configurePreset": "debug-clang"
+        },
+        {
+            "name": "release-clang",
+            "displayName": "Release Build (Clang++)",
+            "configurePreset": "release-clang"
+        },
+        {
+            "name": "profile-clang",
+            "displayName": "Profile Build (Clang++)",
+            "configurePreset": "profile-clang"
+        },
+        {
+            "name": "debug-gcc",
+            "displayName": "Debug Build (GCC)",
+            "configurePreset": "debug-gcc"
+        },
+        {
+            "name": "release-gcc",
+            "displayName": "Release Build (GCC)",
+            "configurePreset": "release-gcc"
+        },
+        {
+            "name": "profile-gcc",
+            "displayName": "Profile Build (GCC)",
+            "configurePreset": "profile-gcc"
         }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "debug",
-      "displayName": "Debug Build",
-      "configurePreset": "debug"
-    },
-    {
-      "name": "release",
-      "displayName": "Release Build",
-      "configurePreset": "release"
-    },
-    {
-      "name": "debug-clang",
-      "displayName": "Debug Build (Clang++)",
-      "configurePreset": "debug-clang"
-    },
-    {
-      "name": "release-clang",
-      "displayName": "Release Build (Clang++)",
-      "configurePreset": "release-clang"
-    },
-    {
-        "name": "debug-gcc",
-        "displayName": "Debug Build (GCC)",
-        "configurePreset": "debug-gcc"
-    },
-    {
-        "name": "release-gcc",
-        "displayName": "Release Build (GCC)",
-        "configurePreset": "release-gcc"
-    }
-  ]
+    ]
 }

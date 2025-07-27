@@ -498,60 +498,87 @@ void GameWidget::setOpponent(std::string opponentChoice) {
     opponent = nullptr;
 }
 
-void GameWidget::startEngineMatch(std::string engine1, std::string engine2) {
-    Engine* whiteEngine = nullptr;
-    Engine* blackEngine = nullptr;
-
-    for (const auto& up : engines) {
-        if (up->name() == engine1) whiteEngine = up.get();
-        if (up->name() == engine2) blackEngine = up.get();
-    }
-    if (!whiteEngine || !blackEngine) {
-        std::cerr << "Error: could not find engine(s) "
-                  << engine1 << " or " << engine2 << "\n";
-        return;
-    }
-
-    const int nrGames     = 1000;
-    const int timePerMove = 100;  // ms
-
-    int whiteWins = 0, blackWins = 0, draws = 0;
-
-    std::string report;
-
-    for (int i = 0; i < nrGames; ++i) {
-        if (i % 100 == 0) {
-            std::cout << "Starting game " + std::to_string(i) + "\n";
-        }
-
+static std::tuple<int,int,int>
+playChunk(int start,
+          int end,
+          Engine* whiteEngine,
+          Engine* blackEngine,
+          int timePerMove)
+{
+    int w=0, b=0, d=0;
+    for (int i = start; i < end; ++i) {
         Board board;
         bool whiteToMove = (i % 2 == 0);
-
         while (!board.isGameOver()) {
             Engine* cur = whiteToMove ? whiteEngine : blackEngine;
             Move m = cur->bestMove(board, timePerMove);
             board.makeMove(m);
             whiteToMove = !whiteToMove;
         }
-
         if (board.isCheck()) {
-            if (abs(board.getTurn()) == Piece::WHITE) {
-                whiteWins++;
-            } else {
-                blackWins++;
-            }
+            if (abs(board.getTurn()) == Piece::WHITE) ++w;
+            else                                       ++b;
         } else {
-            draws++;
+            ++d;
         }
     }
+    return {w,b,d};
+}
 
-    report += "Match complete:\n";
-    report += "  " + engine1 + " (as White) wins: " + std::to_string(whiteWins) + "\n";
-    report += "  " + engine2 + " (as Black) wins: " + std::to_string(blackWins) + "\n";
-    report += "  draws: "                      + std::to_string(draws)      + "\n";
-    std::cout << report;
+void GameWidget::startEngineMatch(const std::string e1, const std::string e2) {
+    // — find your Engine*’s as before —
+    Engine* whiteEngine = nullptr;
+    Engine* blackEngine = nullptr;
+    for (auto& up : engines) {
+        if (up->name() == e1) whiteEngine = up.get();
+        if (up->name() == e2) blackEngine = up.get();
+    }
+    if (!whiteEngine || !blackEngine) return;
 
-    emit(engineMatchResultsReady(report));
+    const int nrGames     = 1000;
+    const int timePerMove = 100;
+
+    // decide how many threads to use:
+    unsigned nThreads = std::thread::hardware_concurrency();
+    if (nThreads < 1) nThreads = 1;
+
+    // compute chunk sizes:
+    int chunkSize = nrGames / nThreads;
+    int leftover  = nrGames % nThreads;
+
+    // launch async tasks:
+    std::vector<std::future<std::tuple<int,int,int>>> futures;
+    int start = 0;
+    for (unsigned t = 0; t < nThreads; ++t) {
+        int end = start + chunkSize + (t < (unsigned)leftover ? 1 : 0);
+        futures.push_back(
+            std::async(std::launch::async,
+                       playChunk, start, end,
+                       whiteEngine, blackEngine,
+                       timePerMove));
+        start = end;
+    }
+
+    // collect results:
+    int whiteWins = 0, blackWins = 0, draws = 0;
+    for (auto& f : futures) {
+        auto [w,b,d] = f.get();
+        whiteWins += w;
+        blackWins += b;
+        draws     += d;
+    }
+
+    // build your report:
+    std::string report =
+        "Match complete:\n"
+        "  " + e1 + " (as White) wins: " + std::to_string(whiteWins) + "\n"
+        "  " + e2 + " (as Black) wins: " + std::to_string(blackWins) + "\n"
+        "  draws: "                      + std::to_string(draws)      + "\n";
+
+    // emit the signal *on the GUI thread*:
+    QMetaObject::invokeMethod(this, [=]{
+        emit engineMatchResultsReady(report);
+    });
 }
 
 

@@ -12,6 +12,7 @@
 
 std::vector<Move> MoveGenerator::generateMoves(Board& board) {
     std::vector<Move> moves;
+    moves.reserve(218);
 
     if (board.isGameOver()) {
         return moves;
@@ -25,45 +26,29 @@ std::vector<Move> MoveGenerator::generateMoves(Board& board) {
 
         switch (board.getPieceType(piecePosition)) {
             case Piece::PAWN: {
-                const std::vector<Move>& pawnMoves = generatePawnMoves(board, piecePosition);
-                moves.reserve(moves.size() + pawnMoves.size());
-                moves.insert(moves.end(), pawnMoves.begin(), pawnMoves.end());
+                generatePawnMoves(board, piecePosition, moves);
                 break;
             }
             case Piece::BISHOP: {
-                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP);
-                moves.reserve(moves.size() + bishopMoves.size());
-                moves.insert(moves.end(), bishopMoves.begin(), bishopMoves.end());
+                generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP, moves);
                 break;
             }
             case Piece::ROOK: {
-                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK);
-                moves.reserve(moves.size() + rookMoves.size());
-                moves.insert(moves.end(), rookMoves.begin(), rookMoves.end());
+                generateSlidingPieceMoves(board, piecePosition, Piece::ROOK, moves);
                 break;
             }
             case Piece::QUEEN: {
-                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP);
-                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK);
-                moves.reserve(moves.size() + bishopMoves.size() + rookMoves.size());
-                moves.insert(moves.end(), bishopMoves.begin(), bishopMoves.end());
-                moves.insert(moves.end(), rookMoves.begin(), rookMoves.end());
+                generateSlidingPieceMoves(board, piecePosition, Piece::BISHOP, moves);
+                generateSlidingPieceMoves(board, piecePosition, Piece::ROOK, moves);
                 break;
             }
             case Piece::KING: {
-                const std::vector<Move>& kingMoves = generateKingMoves(board, piecePosition);
-                moves.reserve(moves.size() + kingMoves.size());
-                moves.insert(moves.end(), kingMoves.begin(), kingMoves.end());
-
-                const std::vector<Move>& castleMoves = generateCastleMoves(board, piecePosition);
-                moves.reserve(moves.size() + castleMoves.size());
-                moves.insert(moves.end(), castleMoves.begin(), castleMoves.end());
+                generateKingMoves(board, piecePosition, moves);
+                generateCastleMoves(board, piecePosition, moves);
                 break;
             }
             case Piece::KNIGHT: {
-                const std::vector<Move>& knightMoves = generateKnightMoves(board, piecePosition);
-                moves.reserve(moves.size() + knightMoves.size());
-                moves.insert(moves.end(), knightMoves.begin(), knightMoves.end());
+                generateKnightMoves(board, piecePosition, moves);
                 break;
             }
         }
@@ -72,12 +57,10 @@ std::vector<Move> MoveGenerator::generateMoves(Board& board) {
     return moves;
 }
 
-std::vector<Move> MoveGenerator::generatePawnMoves(Board& board, const int index, bool returnEarly) {
-    std::vector<Move> moves;
-
+void MoveGenerator::generatePawnMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly) {
     //double check, only the king can move
     if (std::popcount(board.getCheckers()) > 1) {
-        return moves;
+        return;
     }
 
     const int color = board.getPieceColor(index);
@@ -153,21 +136,17 @@ std::vector<Move> MoveGenerator::generatePawnMoves(Board& board, const int index
         moves.emplace_back(index, to, flag);
 
         if (returnEarly)
-            return moves;
+            return;
     }
-
-    return moves;
 }
 
-std::vector<Move> MoveGenerator::generateKnightMoves(Board& board, const int index, bool returnEarly) {
-    std::vector<Move> moves;
-
+void MoveGenerator::generateKnightMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly) {
     const uint64_t pseudoMoves = PGD::getAttackMap(Piece::create(Piece::KNIGHT, Piece::WHITE), index);
     uint64_t pseudoLegalMoves = pseudoMoves & ~board.getPiecePositionsColor(board.getPieceColor(index));
 
     //if it's a double check, only king moves allowed
     if (std::popcount(board.getCheckers()) > 1)
-        return moves;
+        return;
 
     //if it's check, you are only allowed to move on the checkline
     if (std::popcount(board.getCheckers()) == 1)
@@ -187,16 +166,12 @@ std::vector<Move> MoveGenerator::generateKnightMoves(Board& board, const int ind
         moves.emplace_back(index, moveTo, flag);
 
         if (returnEarly)
-            return moves;
+            return;
     }
-
-    return moves;
 }
 
-std::vector<Move> MoveGenerator::generateSlidingPieceMoves(Board& board, const int index, const int pieceType,
-                                                           bool returnEarly) {
-    std::vector<Move> moves;
-
+void MoveGenerator::generateSlidingPieceMoves(Board& board, const int index, const int pieceType,
+                                              std::vector<Move> &moves, bool returnEarly) {
     const uint64_t blockerBitboard = board.getPiecePositionsColor(Piece::WHITE) | board.
                                      getPiecePositionsColor(Piece::BLACK);
 
@@ -208,7 +183,7 @@ std::vector<Move> MoveGenerator::generateSlidingPieceMoves(Board& board, const i
 
     //if it's a double check, only king moves allowed
     if (std::popcount(board.getCheckers()) > 1)
-        return moves;
+        return;
 
     //if it's check, you are only allowed to move on the checkline
     if (std::popcount(board.getCheckers()) == 1)
@@ -228,13 +203,11 @@ std::vector<Move> MoveGenerator::generateSlidingPieceMoves(Board& board, const i
         moves.emplace_back(index, moveTo, flag);
 
         if (returnEarly)
-            return moves;
+            return;
     }
-
-    return moves;
 }
 
-std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index, bool returnEarly) {
+void MoveGenerator::generateKingMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly) {
     const uint64_t pseudoMoves = PGD::getAttackMap(Piece::create(Piece::KING, Piece::WHITE), index);
     uint64_t pseudoLegalMoves = pseudoMoves & ~board.getPiecePositionsColor(board.getPieceColor(index));
 
@@ -266,7 +239,6 @@ std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index
 
     uint64_t legalMoves = pseudoLegalMoves & ~board.getColorAttackMap(abs(board.getTurn() - 1));
 
-    std::vector<Move> moves;
     while (legalMoves) {
         const int moveTo = popLSB(legalMoves);
 
@@ -275,18 +247,15 @@ std::vector<Move> MoveGenerator::generateKingMoves(Board& board, const int index
         moves.emplace_back(index, moveTo, flag);
 
         if (returnEarly)
-            return moves;
+            return;
     }
-
-    return moves;
 }
 
-std::vector<Move> MoveGenerator::generateCastleMoves(Board& board, const int index, bool returnEarly) {
+void MoveGenerator::generateCastleMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly) {
     const int color = board.getTurn();
-    std::vector<Move> moves;
 
     if (board.isCheck()) {
-        return moves;
+        return;
     }
 
     const uint64_t friendly = board.getPiecePositionsColor(board.getTurn());
@@ -308,7 +277,7 @@ std::vector<Move> MoveGenerator::generateCastleMoves(Board& board, const int ind
 
         //no pieces allowed between king and rook
         if ((between & allPieces) != 0) {
-            return moves;
+            return;
         }
 
         //index - 3 can be a check, it's fine
@@ -318,8 +287,6 @@ std::vector<Move> MoveGenerator::generateCastleMoves(Board& board, const int ind
         if ((between & enemyAttackMap) == 0)
             moves.emplace_back(index, index - 2, Flag::CASTLE_Q);
     }
-
-    return moves;
 }
 
 // <--> MOVE GENERATION <--> //
@@ -341,43 +308,43 @@ bool MoveGenerator::legalMovesExist(Board& board) {
 
         switch (board.getPieceType(piecePosition)) {
             case Piece::PAWN: {
-                const std::vector<Move>& pawnMoves = generatePawnMoves(board, piecePosition, true);
-                if (pawnMoves.size() > 0)
+                generatePawnMoves(board, piecePosition, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }
             case Piece::BISHOP: {
-                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(
-                        board, piecePosition, Piece::BISHOP, true);
-                if (bishopMoves.size() > 0)
+                generateSlidingPieceMoves(
+                        board, piecePosition, Piece::BISHOP, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }
             case Piece::ROOK: {
-                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(board, piecePosition, Piece::ROOK, true);
-                if (rookMoves.size() > 0)
+                generateSlidingPieceMoves(board, piecePosition, Piece::ROOK, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }
             case Piece::QUEEN: {
-                const std::vector<Move>& bishopMoves = generateSlidingPieceMoves(
-                        board, piecePosition, Piece::BISHOP, true);
-                const std::vector<Move>& rookMoves = generateSlidingPieceMoves(
-                        board, piecePosition, Piece::ROOK, true);
-                if (bishopMoves.size() > 0 || rookMoves.size() > 0)
+                generateSlidingPieceMoves(
+                        board, piecePosition, Piece::BISHOP, moves, true);
+                generateSlidingPieceMoves(
+                        board, piecePosition, Piece::ROOK, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }
             case Piece::KING: {
-                const std::vector<Move>& kingMoves = generateKingMoves(board, piecePosition, true);
-                const std::vector<Move>& castleMoves = generateCastleMoves(board, piecePosition, true);
-                if (kingMoves.size() > 0 || castleMoves.size() > 0)
+                generateKingMoves(board, piecePosition, moves, true);
+                generateCastleMoves(board, piecePosition, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }
             case Piece::KNIGHT: {
-                const std::vector<Move>& knightMoves = generateKnightMoves(board, piecePosition, true);
-                if (knightMoves.size() > 0)
+                generateKnightMoves(board, piecePosition, moves, true);
+                if (!moves.empty())
                     return true;
                 break;
             }

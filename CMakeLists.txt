@@ -61,6 +61,8 @@ add_executable(Chess
         src/engines/random/random.cpp
         src/engines/random/random.h
         src/engines/engineRegistry.h
+        src/engines/greedy/greedy.cpp
+        src/engines/greedy/greedy.h
 )
 
 target_link_libraries(Chess PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)

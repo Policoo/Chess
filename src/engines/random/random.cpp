@@ -25,7 +25,7 @@ Move Random::bestMove(Board& board, int time) {
     return moves[random_index];
 }
 
-int Random::evaluate(const Board& board) {
+int Random::evaluate(Board& board) {
     return 0;
 }
 

@@ -25,13 +25,13 @@ public:
     static bool legalMovesExist(Board& board);
 
 private:
-    static std::vector<Move> generateSlidingPieceMoves(Board& board, int index, int pieceType, bool returnEarly = false);
+    static void generateSlidingPieceMoves(Board& board, int index, int pieceType, std::vector<Move> &moves, bool returnEarly = false);
 
-    static std::vector<Move> generateKingMoves(Board& board, const int index, bool returnEarly = false);
+    static void generateKingMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly = false);
 
-    static std::vector<Move> generateCastleMoves(Board& board, const int index, bool returnEarly = false);
+    static void generateCastleMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly = false);
 
-    static std::vector<Move> generateKnightMoves(Board& board, const int index, bool returnEarly = false);
+    static void generateKnightMoves(Board& board, const int index, std::vector<Move> &moves, bool returnEarly = false);
 
-    static std::vector<Move> generatePawnMoves(Board& board, int index, bool returnEarly = false);
+    static void generatePawnMoves(Board& board, int index, std::vector<Move> &moves, bool returnEarly = false);
 };
