@@ -8,6 +8,8 @@
 #include "optionsWidget.h"
 #include "dialogWidget.h"
 
+class QHBoxLayout;
+
 class Chess : public QMainWindow {
     Q_OBJECT
 
@@ -39,7 +41,7 @@ public slots:
 
 private:
     QWidget *mainWidget;
-    QLayout *layout;
+    QHBoxLayout *layout;
 
     OptionsWidget *optionsWidget;
     GameWidget *boardWidget;

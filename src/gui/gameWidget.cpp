@@ -1,6 +1,11 @@
 #include <QThread>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QDir>
+#include <QResizeEvent>
+#include <QShowEvent>
+#include <QTimer>
+#include <algorithm>
 
 #include <iostream>
 #include <memory>
@@ -18,7 +23,7 @@
 
 GameWidget::GameWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(552, 552);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QLayout* hLayout = new QVBoxLayout(this);
     hLayout->setSpacing(0);
@@ -31,19 +36,27 @@ GameWidget::GameWidget(QWidget* parent) :
     vLayout->setContentsMargins(0, 0, 0, 0);
 
     boardWidget = new QWidget(this);
-    boardWidget->setFixedSize(512, 512);
+    boardWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     northWidget = new QWidget(this);
     northWidget->setStyleSheet("background-color: #363636");
+    northWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    northWidget->setMinimumHeight(20);
 
     eastWidget = new QWidget(this);
     eastWidget->setStyleSheet("background-color: #363636");
+    eastWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    eastWidget->setMinimumWidth(20);
 
     southWidget = new QWidget(this);
     southWidget->setStyleSheet("background-color: #363636");
+    southWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    southWidget->setMinimumHeight(20);
 
     westWidget = new QWidget(this);
     westWidget->setStyleSheet("background-color: #363636");
+    westWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    westWidget->setMinimumWidth(20);
 
     hLayout->addWidget(northWidget);
     hLayout->addWidget(hContainer);
@@ -60,6 +73,77 @@ GameWidget::GameWidget(QWidget* parent) :
     lastClick = -1;
 }
 
+void GameWidget::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    // Keep board square and expand gutters to fill leftover space
+    if (!boardWidget) return;
+    const int minGutter = 20;
+    int w = this->width();
+    int h = this->height();
+    int side = std::max(0, std::min(w - 2*minGutter, h - 2*minGutter));
+    // compute leftover for gutters
+    int extraW = std::max(0, w - side);
+    int extraH = std::max(0, h - side);
+    int westW = extraW / 2;
+    int eastW = extraW - westW;
+    int northH = extraH / 2;
+    int southH = extraH - northH;
+    // apply sizes
+    westWidget->setFixedWidth(std::max(minGutter, westW));
+    eastWidget->setFixedWidth(std::max(minGutter, eastW));
+    northWidget->setFixedHeight(std::max(minGutter, northH));
+    southWidget->setFixedHeight(std::max(minGutter, southH));
+    boardWidget->setMaximumSize(side, side);
+    boardWidget->setMinimumSize(0, 0);
+    // Keep coordinate labels tight to the board by matching spacers to west/east widths
+    if (southLeftSpacer && southRightSpacer) {
+        southLeftSpacer->setFixedWidth(std::max(minGutter, westW));
+        southRightSpacer->setFixedWidth(std::max(minGutter, eastW));
+    }
+    // Scale coordinate font based on gutter sizes
+    int coordFontPt = std::max(10, side / 32); // heuristic
+    QFont f;
+    f.setPointSize(coordFontPt);
+    for (auto* lbl : rowLabels) lbl->setFont(f);
+    for (auto* lbl : colLabels) lbl->setFont(f);
+    updateBoard();
+}
+
+void GameWidget::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    // Ensure initial sizing/scaling is correct on first show, after layouts settle
+    QTimer::singleShot(0, this, [this]() {
+        const int minGutter = 20;
+        int w = this->width();
+        int h = this->height();
+        int side = std::max(0, std::min(w - 2*minGutter, h - 2*minGutter));
+        int extraW = std::max(0, w - side);
+        int extraH = std::max(0, h - side);
+        int westW = extraW / 2;
+        int eastW = extraW - westW;
+        int northH = extraH / 2;
+        int southH = extraH - northH;
+        westWidget->setFixedWidth(std::max(minGutter, westW));
+        eastWidget->setFixedWidth(std::max(minGutter, eastW));
+        northWidget->setFixedHeight(std::max(minGutter, northH));
+        southWidget->setFixedHeight(std::max(minGutter, southH));
+        if (boardWidget) {
+            boardWidget->setMaximumSize(side, side);
+            boardWidget->setMinimumSize(0, 0);
+        }
+        if (southLeftSpacer && southRightSpacer) {
+            southLeftSpacer->setFixedWidth(std::max(minGutter, westW));
+            southRightSpacer->setFixedWidth(std::max(minGutter, eastW));
+        }
+        int coordFontPt = std::max(10, side / 32);
+        QFont f;
+        f.setPointSize(coordFontPt);
+        for (auto* lbl : rowLabels) lbl->setFont(f);
+        for (auto* lbl : colLabels) lbl->setFont(f);
+        updateBoard();
+    });
+}
+
 void GameWidget::constructBoard() {
     auto* gridLayout = new QGridLayout(boardWidget);
     gridLayout->setSpacing(0);
@@ -67,11 +151,16 @@ void GameWidget::constructBoard() {
 
     tile.resize(64);
     for (int index = 0; index < 64; index++) {
-        tile[index] = new QLabel(boardWidget);
-
+            tile[index] = new QLabel(boardWidget);
+            tile[index]->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         tile[index]->installEventFilter(this);
         gridLayout->addWidget(tile[index], index / 8, index % 8);
     }
+
+        for (int i = 0; i < 8; ++i) {
+            gridLayout->setRowStretch(i, 1);
+            gridLayout->setColumnStretch(i, 1);
+        }
 
     resetColors();
     addCoordinates();
@@ -94,41 +183,48 @@ void GameWidget::addCoordinates() {
 
     QFont font("Impact", 14);
 
-    QLayout* vLayout = new QVBoxLayout(westWidget);
+    auto* vLayout = new QVBoxLayout(westWidget);
     vLayout->setSpacing(0);
     vLayout->setContentsMargins(0, 0, 0, 0);
 
-    QLayout* hLayout = new QHBoxLayout(southWidget);
+    auto* hLayout = new QHBoxLayout(southWidget);
     hLayout->setSpacing(0);
     hLayout->setContentsMargins(0, 0, 0, 0);
 
-    auto* leftSpacer = new QLabel(southWidget);
-    leftSpacer->setFixedSize(20, 20);
-    hLayout->addWidget(leftSpacer);
+    // dynamic left spacer matches west gutter width
+    southLeftSpacer = new QWidget(southWidget);
+    southLeftSpacer->setMinimumSize(20, 20);
+    southLeftSpacer->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    hLayout->addWidget(southLeftSpacer);
 
     for (int index = 0; index < 8; index++) {
         auto* row = new QLabel(westWidget);
-        row->setFixedSize(20, 64);
+        row->setMinimumWidth(20);
+        row->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
         row->setStyleSheet("color: white;");
         row->setText(QString::fromStdString(std::to_string(numbers[index])));
 
         row->setFont(font);
         row->setAlignment(Qt::AlignCenter);
         vLayout->addWidget(row);
+        rowLabels.push_back(row);
 
         auto* column = new QLabel(southWidget);
-        column->setFixedSize(64, 20);
+        column->setMinimumHeight(20);
+        column->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         column->setStyleSheet("color: white;");
         column->setText(QString(letters[index]));
 
         column->setFont(font);
         column->setAlignment(Qt::AlignCenter);
         hLayout->addWidget(column);
+        colLabels.push_back(column);
     }
 
-    auto* rightSpacer = new QLabel(southWidget);
-    rightSpacer->setFixedSize(20, 20);
-    hLayout->addWidget(rightSpacer);
+    southRightSpacer = new QWidget(southWidget);
+    southRightSpacer->setMinimumSize(20, 20);
+    southRightSpacer->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    hLayout->addWidget(southRightSpacer);
 }
 
 void GameWidget::initializePieceImages() {
@@ -138,8 +234,9 @@ void GameWidget::initializePieceImages() {
     for (int y = 0; y < fullImage.height(); y += 200) {
         for (int x = 0; x < fullImage.width(); x += 200) {
             QImage piece = fullImage.copy(x, y, 200, 200);
-            pieceImages.push_back(
-                    QPixmap::fromImage(piece).scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            QPixmap px = QPixmap::fromImage(piece);
+            originalPieceImages.push_back(px);
+            pieceImages.push_back(px.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         }
     }
 }
@@ -268,7 +365,17 @@ void GameWidget::updateBoard() {
                 break;
         }
         pieceIndex = (board->getPieceColor(perIndex) == Piece::BLACK) ? pieceIndex + 6 : pieceIndex;
-        tile[index]->setPixmap(pieceImages[pieceIndex]);
+        // Scale the pixmap to current tile size for crispness
+        int tileWidth = tile[index]->width();
+        int tileHeight = tile[index]->height();
+        int size = std::min(tileWidth, tileHeight);
+        if (size <= 0) size = 64;
+        if (!originalPieceImages.empty() && pieceIndex < static_cast<int>(originalPieceImages.size())) {
+            tile[index]->setPixmap(originalPieceImages[pieceIndex].scaled(size, size, Qt::KeepAspectRatio,
+                                                                          Qt::SmoothTransformation));
+        } else {
+            tile[index]->setPixmap(pieceImages[pieceIndex]);
+        }
     }
 }
 

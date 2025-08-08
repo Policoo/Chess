@@ -9,7 +9,8 @@ Chess::Chess(QWidget* parent) :
     debug(false) {
     mainWidget = new QWidget(this);
     mainWidget->setStyleSheet("background-color: black;");
-    mainWidget->setFixedSize(1154, 552);
+    // Allow the main window to be resizable
+    mainWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     setCentralWidget(mainWidget);
     layout = new QHBoxLayout(mainWidget);
@@ -36,6 +37,20 @@ Chess::Chess(QWidget* parent) :
     layout->addWidget(optionsWidget);
     layout->addWidget(boardWidget);
     layout->addWidget(dialogWidget);
+
+    // Give the central board priority to take extra space
+    layout->setStretchFactor(optionsWidget, 0);
+    layout->setStretchFactor(boardWidget, 1);
+    layout->setStretchFactor(dialogWidget, 0);
+
+    // Keep side panels equal width for symmetry
+    optionsWidget->setMinimumWidth(300);
+    optionsWidget->setMaximumWidth(360);
+    dialogWidget->setMinimumWidth(300);
+    dialogWidget->setMaximumWidth(360);
+
+    // Provide a reasonable default size without fixing it
+    resize(1200, 700);
 }
 
 void Chess::resetBoard() {

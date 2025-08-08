@@ -12,9 +12,10 @@
 OptionsWidget::OptionsWidget(QWidget* parent) :
     QWidget(parent) {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 552);
     widget->setStyleSheet("background-color: black;");
-    setFixedSize(300, 552);
+    setMinimumWidth(260);
+    setMaximumWidth(420);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
     optionsLayout = new QVBoxLayout(this);
     optionsLayout->setSpacing(1);
@@ -31,12 +32,12 @@ OptionsWidget::OptionsWidget(QWidget* parent) :
 
 void OptionsWidget::constructTopButtons() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 40);
+    widget->setMinimumHeight(40);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
-    QLayout* layout = new QHBoxLayout(widget);
+    auto* layout = new QHBoxLayout(widget);
     layout->setContentsMargins(5, 0, 5, 0);
-    layout->setAlignment(Qt::AlignCenter);
+    layout->setAlignment(Qt::AlignVCenter);
 
     auto* reset = new QPushButton(widget);
     reset->setFixedSize(50, 27);
@@ -60,7 +61,8 @@ void OptionsWidget::constructTopButtons() {
     connect(reset, &QPushButton::clicked, this, &OptionsWidget::resetBoardSignal);
     layout->addWidget(reset);
 
-    layout->addItem(new QSpacerItem(24, 20));
+    auto* spacer1 = new QSpacerItem(24, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    layout->addItem(spacer1);
 
     debugButton = new QPushButton(widget);
     debugButton->setFixedSize(50, 27);
@@ -84,7 +86,8 @@ void OptionsWidget::constructTopButtons() {
     connect(debugButton, &QPushButton::clicked, this, &OptionsWidget::debugPressed);
     layout->addWidget(debugButton);
 
-    layout->addItem(new QSpacerItem(24, 20));
+    auto* spacer2 = new QSpacerItem(24, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    layout->addItem(spacer2);
 
     auto* undo = new QPushButton(widget);
     undo->setFixedSize(50, 27);
@@ -108,7 +111,8 @@ void OptionsWidget::constructTopButtons() {
     connect(undo, &QPushButton::clicked, this, &OptionsWidget::undoMoveSignal);
     layout->addWidget(undo);
 
-    layout->addItem(new QSpacerItem(24, 20));
+    auto* spacer3 = new QSpacerItem(24, 1, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    layout->addItem(spacer3);
 
     auto* imageButton = new QPushButton(widget);
     imageButton->setFixedSize(50, 27);
@@ -134,7 +138,7 @@ void OptionsWidget::constructTopButtons() {
 
 void OptionsWidget::constructFenWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 90);
+    widget->setMinimumHeight(90);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QVBoxLayout(widget);
@@ -151,7 +155,8 @@ void OptionsWidget::constructFenWidget() {
     layout->addWidget(label);
 
     fenInput = new QLineEdit(widget);
-    fenInput->setFixedSize(280, 24);
+    fenInput->setMinimumHeight(24);
+    fenInput->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     fenInput->setStyleSheet(
             "QLineEdit {"
             "   background-color: #565656;"
@@ -193,7 +198,7 @@ void OptionsWidget::constructFenWidget() {
 
 void OptionsWidget::constructPerftWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(299, 40);
+    widget->setMinimumHeight(40);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QHBoxLayout(widget);
@@ -209,7 +214,8 @@ void OptionsWidget::constructPerftWidget() {
     layout->addWidget(label);
 
     depthInput = new QLineEdit(widget);
-    depthInput->setFixedSize(25, 24);
+    depthInput->setMinimumSize(35, 24);
+    depthInput->setMaximumWidth(60);
     depthInput->setStyleSheet(
             "QLineEdit {"
             "   background-color: #565656;"
@@ -225,7 +231,7 @@ void OptionsWidget::constructPerftWidget() {
     layout->addWidget(depthInput);
 
     auto* goPerftButton = new QPushButton("Go Perft", widget);
-    goPerftButton->setFixedSize(70, 25);
+    goPerftButton->setMinimumHeight(25);
     goPerftButton->setStyleSheet(
             "QPushButton {"
             "   background-color: #6495ED;"
@@ -245,14 +251,14 @@ void OptionsWidget::constructPerftWidget() {
     connect(goPerftButton, &QPushButton::clicked, this, &OptionsWidget::goPerft);
     layout->addWidget(goPerftButton);
 
-    layout->addItem(new QSpacerItem(130, 40));
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
 
     optionsLayout->addWidget(widget);
 }
 
 void OptionsWidget::constructOpponentWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 40);
+    widget->setMinimumHeight(40);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QHBoxLayout(widget);
@@ -287,6 +293,9 @@ void OptionsWidget::constructOpponentWidget() {
             "   border-left-style: solid;"
             "}"
             );
+    opponentChoice->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    opponentChoice->setMinimumWidth(120);
+    opponentChoice->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     opponentChoice->addItem("Yourself :(");
     for (const auto& option: engines) {
@@ -300,7 +309,7 @@ void OptionsWidget::constructOpponentWidget() {
 
 void OptionsWidget::constructMatchWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 90);
+    widget->setMinimumHeight(90);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QVBoxLayout(widget);
@@ -337,6 +346,9 @@ void OptionsWidget::constructMatchWidget() {
             "   border-left-style: solid;"
             "}"
             );
+    engine1->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    engine1->setMinimumWidth(100);
+    engine1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for (const auto& option: engines) {
         engine1->addItem(option->name().data());
     }
@@ -373,6 +385,9 @@ void OptionsWidget::constructMatchWidget() {
             "   border-left-style: solid;"
             "}"
             );
+    engine2->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    engine2->setMinimumWidth(100);
+    engine2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for (const auto& option: engines) {
         engine2->addItem(option->name().data());
     }
@@ -381,7 +396,7 @@ void OptionsWidget::constructMatchWidget() {
     layout->addItem(horizontalLayout);
 
     auto* startButton = new QPushButton("Start", widget);
-    startButton->setFixedHeight(25);
+    startButton->setMinimumHeight(25);
     startButton->setStyleSheet(
             "QPushButton {"
             "   background-color: #6495ED;"
@@ -407,7 +422,8 @@ void OptionsWidget::constructMatchWidget() {
 
 void OptionsWidget::constructEvalWidget() {
     auto* widget = new QWidget(this);
-    widget->setFixedSize(300, 247);
+    widget->setMinimumHeight(120);
+    widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     widget->setStyleSheet("background-color: #3d3d3d;");
 
     QLayout* layout = new QVBoxLayout(widget);

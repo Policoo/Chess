@@ -46,6 +46,8 @@ signals:
 
 protected:
     void mousePressEvent(QMouseEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
+    void showEvent(QShowEvent* event) override;
 
 private:
     QWidget* boardWidget;
@@ -54,9 +56,14 @@ private:
     QWidget* eastWidget;
     QWidget* westWidget;
     QWidget* southWidget;
+    QWidget* southLeftSpacer = nullptr;
+    QWidget* southRightSpacer = nullptr;
 
     std::vector<QLabel*> tile;
     std::vector<QPixmap> pieceImages;
+    std::vector<QPixmap> originalPieceImages;
+    std::vector<QLabel*> rowLabels;
+    std::vector<QLabel*> colLabels;
 
     Board* board;
     Engine* opponent;

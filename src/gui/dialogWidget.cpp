@@ -4,23 +4,23 @@
 #include <QScrollBar>
 #include <QLabel>
 #include <QFontDatabase>
+#include <QResizeEvent>
 #include <iostream>
 
 DialogWidget::DialogWidget(QWidget* parent) :
     QWidget(parent) {
-    setFixedSize(300, 552);
+    setMinimumWidth(240);
+    setMaximumWidth(420);
+    setStyleSheet("background-color: black;");
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
-    auto* widget = new QWidget(this);
-    widget->setStyleSheet("background-color: black;");
-    widget->setFixedSize(300, 552);
-
-    auto* vLayout = new QVBoxLayout(widget);
+    auto* vLayout = new QVBoxLayout(this);
     vLayout->setSpacing(1);
     vLayout->setContentsMargins(0, 0, 0, 0);
     vLayout->setAlignment(Qt::AlignTop);
 
-    auto* desc = new QWidget(widget);
-    desc->setFixedSize(300, 35);
+    auto* desc = new QWidget(this);
+    desc->setMinimumHeight(35);
     desc->setStyleSheet("background-color: #3d3d3d;");
 
     auto* descLayout = new QVBoxLayout(desc);
@@ -37,7 +37,7 @@ DialogWidget::DialogWidget(QWidget* parent) :
     descLayout->addWidget(descText);
     vLayout->addWidget(desc);
 
-    auto* scrollArea = new QScrollArea(widget);
+    auto* scrollArea = new QScrollArea(this);
     scrollArea->setStyleSheet(
             "border: none;"
             "background-color: #3d3d3d;"
@@ -50,6 +50,18 @@ DialogWidget::DialogWidget(QWidget* parent) :
 
     scrollArea->setWidget(scrollWidget);
     vLayout->addWidget(scrollArea);
+
+    // Initial font sizing
+    const int w = width();
+    // Adjust fonts once constructed
+    const auto labels = findChildren<QLabel*>();
+    int base = (w >= 420 ? 12 : (w >= 360 ? 11 : 10));
+    for (QLabel* lbl : labels) {
+        QFont f = lbl->font();
+        bool isHeader = (lbl->text() == "Dialog box");
+        f.setPointSize(isHeader ? base + 6 : base);
+        lbl->setFont(f);
+    }
 
     QScrollBar* scrollBar = scrollArea->verticalScrollBar();
     scrollBar->setStyleSheet(
@@ -76,7 +88,7 @@ void DialogWidget::displayDebugString(const std::string& debugString) {
     clearDialogBox();
 
     auto* messageLabel = new QLabel(QString::fromStdString(debugString));
-    messageLabel->setFixedWidth(270);
+    messageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     messageLabel->setWordWrap(true);
     messageLabel->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard);
     messageLabel->setStyleSheet(
@@ -96,15 +108,22 @@ void DialogWidget::displayDebugString(const std::string& debugString) {
     }
 
     layout->addWidget(messageLabel);
+    // Scale fonts after new content added
+    int base = (width() >= 420 ? 12 : (width() >= 360 ? 11 : 10));
+    const auto labels2 = findChildren<QLabel*>();
+    for (QLabel* lbl : labels2) {
+        QFont f = lbl->font();
+        bool isHeader = (lbl->text() == "Dialog box");
+        f.setPointSize(isHeader ? base + 6 : base);
+        lbl->setFont(f);
+    }
 }
 
 void DialogWidget::displayMessage(const std::string& message) {
     clearDialogBox();
 
     auto* messageLabel = new QLabel(QString::fromStdString(message));
-    messageLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    messageLabel->setMinimumSize(messageLabel->sizeHint());
-    messageLabel->setFixedWidth(270);
+    messageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     messageLabel->setWordWrap(true);
     messageLabel->setStyleSheet("color: white;"
             "padding: 3px;"
@@ -112,15 +131,25 @@ void DialogWidget::displayMessage(const std::string& message) {
             );
 
     layout->addWidget(messageLabel);
+    // Scale fonts after new content added
+    int base2 = (width() >= 420 ? 12 : (width() >= 360 ? 11 : 10));
+    const auto labels3 = findChildren<QLabel*>();
+    for (QLabel* lbl : labels3) {
+        QFont f = lbl->font();
+        bool isHeader = (lbl->text() == "Dialog box");
+        f.setPointSize(isHeader ? base2 + 6 : base2);
+        lbl->setFont(f);
+    }
 }
+
+// (removed stray declaration)
+
 
 void DialogWidget::displayCountResults(std::vector<std::string> results) {
     clearDialogBox();
 
     auto* desc = new QLabel(QString::fromStdString(results[0]));
-    desc->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    desc->setMinimumSize(desc->sizeHint());
-    desc->setFixedWidth(270);
+    desc->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     desc->setWordWrap(true);
     desc->setStyleSheet("color: white;"
             "padding: 3px;"
@@ -152,9 +181,7 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         }
 
         auto* moveLabel = new QLabel(QString::fromStdString(results[index]));
-        moveLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        moveLabel->setMinimumSize(moveLabel->sizeHint());
-        moveLabel->setFixedWidth(270);
+        moveLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
                 "padding: 3px;"
@@ -173,9 +200,7 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         }
 
         auto* moveLabel = new QLabel(QString::fromStdString(nodes));
-        moveLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        moveLabel->setMinimumSize(moveLabel->sizeHint());
-        moveLabel->setFixedWidth(270);
+        moveLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
                 "padding: 3px;"
@@ -183,14 +208,21 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
                 );
 
         layout->addWidget(moveLabel);
+        // After full content added, recompute font sizes
+        int base = (width() >= 420 ? 12 : (width() >= 360 ? 11 : 10));
+        const auto labels = findChildren<QLabel*>();
+        for (QLabel* lbl : labels) {
+            QFont f = lbl->font();
+            bool isHeader = (lbl->text() == "Dialog box");
+            f.setPointSize(isHeader ? base + 6 : base);
+            lbl->setFont(f);
+        }
         return;
     }
 
     for (index = index - 1; index < results.size(); index++) {
         auto* moveLabel = new QLabel(QString::fromStdString(results[index]));
-        moveLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        moveLabel->setMinimumSize(moveLabel->sizeHint());
-        moveLabel->setFixedWidth(270);
+        moveLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
         moveLabel->setWordWrap(true);
         moveLabel->setStyleSheet("color: white;"
                 "padding: 3px;"
@@ -200,6 +232,15 @@ void DialogWidget::displayCountResults(std::vector<std::string> results) {
         layout->addWidget(moveLabel);
     }
 
+    // After full content added, recompute font sizes
+    int base = (width() >= 420 ? 12 : (width() >= 360 ? 11 : 10));
+    const auto labels = findChildren<QLabel*>();
+    for (QLabel* lbl : labels) {
+        QFont f = lbl->font();
+        bool isHeader = (lbl->text() == "Dialog box");
+        f.setPointSize(isHeader ? base + 6 : base);
+        lbl->setFont(f);
+    }
 }
 
 void DialogWidget::clearDialogBox() {
@@ -211,5 +252,26 @@ void DialogWidget::clearDialogBox() {
             delete widget;
         }
         delete item;
+    }
+}
+
+void DialogWidget::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    updateFontSizes(event->size().width());
+}
+
+void DialogWidget::updateFontSizes(int panelWidth) {
+    int newBase = 10;
+    if (panelWidth >= 420) newBase = 12;
+    else if (panelWidth >= 360) newBase = 11;
+    if (newBase == currentBaseFontPt) return;
+    currentBaseFontPt = newBase;
+
+    const auto labels = findChildren<QLabel*>();
+    for (QLabel* lbl : labels) {
+        QFont f = lbl->font();
+        bool isHeader = (lbl->text() == "Dialog box");
+        f.setPointSize(isHeader ? (currentBaseFontPt + 6) : currentBaseFontPt);
+        lbl->setFont(f);
     }
 }
