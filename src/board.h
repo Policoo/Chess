@@ -49,26 +49,26 @@ public:
      */
     bool isCheck() const;
 
-    bool isEmpty(int index);
+    bool isEmpty(int index) const;
 
-    int getPieceType(int index);
+    int getPieceType(int index) const;
 
-    int getPieceColor(int index);
+    int getPieceColor(int index) const;
 
 
-    bool isKing(int index);
+    bool isKing(int index) const;
 
-    bool isQueen(int index);
+    bool isQueen(int index) const;
 
-    bool isRook(int index);
+    bool isRook(int index) const;
 
-    bool isBishop(int index);
+    bool isBishop(int index) const;
 
-    bool isKnight(int index);
+    bool isKnight(int index) const;
 
-    bool isPawn(int index);
+    bool isPawn(int index) const;
 
-    bool isColor(int index, int color);
+    bool isColor(int index, int color) const;
 
 
     bool canCastleKSide(int color) const;

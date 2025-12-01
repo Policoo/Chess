@@ -4,6 +4,7 @@
 #include <QDir>
 #include <sstream>
 #include <bitset>
+#include <cctype>
 
 #include "utils.h"
 
@@ -81,17 +82,58 @@ std::unordered_map<std::string, int> parsePerftResults(const std::string& result
     std::istringstream iss(results);
     std::string line;
 
-    while (std::getline(iss, line) && !line.empty()) {
-        // skip any line that contains "info"
+    while (std::getline(iss, line)) {
+        if (line.empty())
+            continue;
+
+        // Skip any line that contains "info"
         if (line.find("info") != std::string::npos)
             continue;
 
+        // We only care about per-move lines like "e2e4: 20"
         auto pos = line.find(':');
         if (pos == std::string::npos)
             continue;
 
-        std::string move  = line.substr(0, pos);
-        int count = std::stoi(line.substr(pos + 1));
+        std::string move = line.substr(0, pos);
+        std::string countStr = line.substr(pos + 1);
+
+        // Trim whitespace around move and count
+        auto trim = [](std::string& s) {
+            auto first = s.find_first_not_of(" \t\r\n");
+            auto last  = s.find_last_not_of(" \t\r\n");
+            if (first == std::string::npos) {
+                s.clear();
+                return;
+            }
+            s = s.substr(first, last - first + 1);
+        };
+
+        trim(move);
+        trim(countStr);
+
+        // Validate move format: a-h1-8a-h1-8[optional promotion]
+        if (move.size() < 4 || move.size() > 5)
+            continue;
+        if (move[0] < 'a' || move[0] > 'h') continue;
+        if (move[1] < '1' || move[1] > '8') continue;
+        if (move[2] < 'a' || move[2] > 'h') continue;
+        if (move[3] < '1' || move[3] > '8') continue;
+        if (move.size() == 5) {
+            char promo = std::tolower(static_cast<unsigned char>(move[4]));
+            if (promo != 'q' && promo != 'r' && promo != 'b' && promo != 'n')
+                continue;
+        }
+
+        // Validate that the count is an integer
+        if (countStr.empty())
+            continue;
+        for (char ch : countStr) {
+            if (!std::isdigit(static_cast<unsigned char>(ch)) && ch != '+' && ch != '-')
+                return result;
+        }
+
+        int count = std::stoi(countStr);
         result[move] = count;
     }
 

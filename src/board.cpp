@@ -856,12 +856,8 @@ std::string Board::debugString() {
 
     obj += "Piece positions:\n";
     for (int c = 0; c < 2; ++c) {
-        obj += "\t" + colorString[c] + ": [";
-        for (size_t code = 0; code < piecePositionsColor.size(); ++code) {
-            if ((code & 1) != c) continue;  // skip entries not matching this color
-            obj += "\n" + bitboardString(piecePositionsColor[code]) + "\n";
-        }
-        obj += "]\n";
+        obj += "\t" + colorString[c] + ":\n";
+        obj += bitboardString(piecePositionsColor[colors[c]]) + "\n";
     }
 
     obj += "Check:\n";
@@ -899,43 +895,43 @@ std::string Board::debugString() {
 
 // <--> GETTERS AND SUCH <--> //
 
-bool Board::isEmpty(int index) {
+bool Board::isEmpty(int index) const {
     return tile[index] == 0;
 }
 
-int Board::getPieceType(int index) {
+int Board::getPieceType(int index) const {
     return Piece::type(tile[index]);
 }
 
-int Board::getPieceColor(int index) {
+int Board::getPieceColor(int index) const {
     return Piece::color(tile[index]);
 }
 
-bool Board::isKing(int index) {
+bool Board::isKing(int index) const {
     return Piece::type(tile[index]) == Piece::KING;
 }
 
-bool Board::isQueen(int index) {
+bool Board::isQueen(int index) const {
     return Piece::type(tile[index]) == Piece::QUEEN;
 }
 
-bool Board::isRook(int index) {
+bool Board::isRook(int index) const {
     return Piece::type(tile[index]) == Piece::ROOK;
 }
 
-bool Board::isBishop(int index) {
+bool Board::isBishop(int index) const {
     return Piece::type(tile[index]) == Piece::BISHOP;
 }
 
-bool Board::isKnight(int index) {
+bool Board::isKnight(int index) const {
     return Piece::type(tile[index]) == Piece::KNIGHT;
 }
 
-bool Board::isPawn(int index) {
+bool Board::isPawn(int index) const {
     return Piece::type(tile[index]) == Piece::PAWN;
 }
 
-bool Board::isColor(int index, int color) {
+bool Board::isColor(int index, int color) const {
     return Piece::color(tile[index]) == color;
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
-#include "piece.h"
 
 enum Flag : uint8_t {
     QUIET = 0,

@@ -27,7 +27,7 @@ elseif (APPLE)
     endforeach()
 endif()
 
-find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets Qml Quick QuickControls2 REQUIRED)
 
 qt_add_resources(RESOURCE_FILES
     resources/resources.qrc
@@ -39,12 +39,10 @@ qt_add_resources(RESOURCE_FILES
 add_executable(Chess
     main.cpp
 
-    # GUI
-    src/gui/chess.cpp
-    src/gui/dialogWidget.cpp src/gui/dialogWidget.h
+    # GUI (QML-based)
     src/gui/engineWorker.cpp src/gui/engineWorker.h
-    src/gui/gameWidget.cpp   src/gui/gameWidget.h
-    src/gui/optionsWidget.cpp src/gui/optionsWidget.h
+    src/gui/controllers/boardController.cpp src/gui/controllers/boardController.h
+    src/gui/controllers/gameController.cpp src/gui/controllers/gameController.h
 
     # Game‑logic
     src/board.cpp
@@ -65,7 +63,7 @@ add_executable(Chess
         src/engines/greedy/greedy.h
 )
 
-target_link_libraries(Chess PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+target_link_libraries(Chess PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Qml Qt6::Quick Qt6::QuickControls2)
 
 # Windows‑only: copy the DLLs + platform plugin next to the executable so the
 # app starts without windeployqt.
@@ -96,7 +94,7 @@ if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     endif ()
 
     # Core Qt runtime libraries we need at runtime
-    foreach(QT_LIB Core Gui Widgets)
+    foreach(QT_LIB Core Gui Widgets Qml Quick QuickControls2)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             "${QT_INSTALL_PATH}/bin/Qt6${QT_LIB}${DEBUG_SUFFIX}.dll"

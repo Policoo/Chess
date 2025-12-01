@@ -2,9 +2,8 @@
 
 #include <bit>
 #include <chrono>
-#include <functional>
-#include <iostream>
 
+#include "../../piece.h"
 #include "../../moveGenerator.h"
 
 Greedy::Greedy() {

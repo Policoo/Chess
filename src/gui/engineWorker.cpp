@@ -17,6 +17,15 @@ void EngineWorker::goPerft(Board& board, int depth) {
     std::unordered_map<std::string, int> counterResults = counter.goPerft(board.positionToFen(), depth);
     std::unordered_map<std::string, int> fishResults = stockFishPerft(board.positionToFen(), depth);
 
+    // Extract and remove the aggregate "Nodes searched" entry from our
+    // counter results so it doesn't get treated as a move key.
+    int totalNodes = 0;
+    const auto nodesIt = counterResults.find("Nodes searched");
+    if (nodesIt != counterResults.end()) {
+        totalNodes = nodesIt->second;
+        counterResults.erase(nodesIt);
+    }
+
     //remove all correct results from the hashmap
     std::vector<std::string> keysToRemove;
     for (const auto& [move, counterCount]: counterResults) {
@@ -69,6 +78,11 @@ void EngineWorker::goPerft(Board& board, int depth) {
             movesNotFound += fishPair.first + ", ";
         }
         result.push_back(movesNotFound);
+    }
+
+    // Append the total node count as a human‑readable summary line.
+    if (totalNodes > 0) {
+        result.push_back("Nodes searched: " + std::to_string(totalNodes));
     }
 
     emit perftDone(result);

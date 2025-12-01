@@ -24,7 +24,6 @@
                 "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile",
                 "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile",
 
-                // MSVC: optimized + PDBs + keep frame pointers, no LTO
                 "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "ProgramDatabase",
                 "CMAKE_C_FLAGS_RELWITHDEBINFO": "/O2 /Zi /Zo /Oy- /DNDEBUG",
                 "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/O2 /Zi /Zo /Oy- /DNDEBUG",
@@ -95,7 +94,6 @@
                 "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-Clang",
                 "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-Clang",
 
-                // Clang: optimized + symbols + frame pointers, no LTO
                 "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG",
                 "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG"
             }
@@ -145,7 +143,6 @@
                 "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-GCC",
                 "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "${sourceDir}/bin/Profile-GCC",
 
-                // GCC: optimized + symbols + frame pointers, no LTO
                 "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG",
                 "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O3 -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -DNDEBUG"
             }

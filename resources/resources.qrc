@@ -5,4 +5,16 @@
         <file>icon.png</file>
         <file>FiraCode-VariableFont_wght.ttf</file>
     </qresource>
+    <qresource prefix="/gui">
+        <file alias="MainWindow.qml">../src/gui/views/MainWindow.qml</file>
+        <file alias="OptionsPanel.qml">../src/gui/views/OptionsPanel.qml</file>
+        <file alias="BoardPanel.qml">../src/gui/views/BoardPanel.qml</file>
+        <file alias="DialogPanel.qml">../src/gui/views/DialogPanel.qml</file>
+        <file alias="ChessButton.qml">../src/gui/views/ChessButton.qml</file>
+        <file alias="ChessTextField.qml">../src/gui/views/ChessTextField.qml</file>
+        <file alias="ChessComboBox.qml">../src/gui/views/ChessComboBox.qml</file>
+        <file alias="ChessBoard.qml">../src/gui/views/ChessBoard.qml</file>
+        <file alias="PieceSprite.qml">../src/gui/views/PieceSprite.qml</file>
+        <file alias="DialogTextBlock.qml">../src/gui/views/DialogTextBlock.qml</file>
+    </qresource>
 </RCC>
